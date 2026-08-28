@@ -1,0 +1,354 @@
+[
+ {
+  "name": "guilt",
+  "keywords": "guilty"
+ },
+ {
+  "name": "remorse",
+  "keywords": "remorseful"
+ },
+ {
+  "name": "regret",
+  "keywords": "regretful"
+ },
+ {
+  "name": "humble",
+  "keywords": "humility"
+ },
+ {
+  "name": "forgiveness",
+  "keywords": "forgive"
+ },
+ {
+  "name": "redemption",
+  "keywords": null
+ },
+ {
+  "name": "shame",
+  "keywords": "shameful"
+ },
+ {
+  "name": "protection",
+  "keywords": "protected"
+ },
+ {
+  "name": "seeking refuge",
+  "keywords": "refuge"
+ },
+ {
+  "name": "seeking guidance",
+  "keywords": "guide"
+ },
+ {
+  "name": "vulnerable",
+  "keywords": "vulnerability"
+ },
+ {
+  "name": "seeking well-being",
+  "keywords": "well being"
+ },
+ {
+  "name": "safe",
+  "keywords": "safety"
+ },
+ {
+  "name": "support",
+  "keywords": "supporting"
+ },
+ {
+  "name": "anxiety",
+  "keywords": "anxious"
+ },
+ {
+  "name": "relief",
+  "keywords": "relieve"
+ },
+ {
+  "name": "helpless",
+  "keywords": "helplessness"
+ },
+ {
+  "name": "gratitude",
+  "keywords": "grateful"
+ },
+ {
+  "name": "aknowledge",
+  "keywords": "aknowledgement"
+ },
+ {
+  "name": "content",
+  "keywords": "contentment"
+ },
+ {
+  "name": "appreciate",
+  "keywords": "appreciation"
+ },
+ {
+  "name": "awe",
+  "keywords": "awed"
+ },
+ {
+  "name": "reverence",
+  "keywords": null
+ },
+ {
+  "name": "trust",
+  "keywords": "trusting"
+ },
+ {
+  "name": "praise",
+  "keywords": "praising"
+ },
+ {
+  "name": "reliance",
+  "keywords": "rely"
+ },
+ {
+  "name": "hope",
+  "keywords": "hoping"
+ },
+ {
+  "name": "desire",
+  "keywords": "desiring"
+ },
+ {
+  "name": "ambition",
+  "keywords": "ambitious"
+ },
+ {
+  "name": "disturb",
+  "keywords": "disturbance"
+ },
+ {
+  "name": "sad",
+  "keywords": "sadness"
+ },
+ {
+  "name": "grief",
+  "keywords": "grievance"
+ },
+ {
+  "name": "overwhelm",
+  "keywords": "overwhelming"
+ },
+ {
+  "name": "submission",
+  "keywords": "submit"
+ },
+ {
+  "name": "depend",
+  "keywords": "dependence"
+ },
+ {
+  "name": "devote",
+  "keywords": "devotion"
+ },
+ {
+  "name": "love",
+  "keywords": "loving"
+ },
+ {
+  "name": "focus",
+  "keywords": "focussing"
+ },
+ {
+  "name": "presence",
+  "keywords": "present"
+ },
+ {
+  "name": "optimism",
+  "keywords": "optimist"
+ },
+ {
+  "name": "reflect",
+  "keywords": "reflection"
+ },
+ {
+  "name": "unite",
+  "keywords": "united"
+ },
+ {
+  "name": "pure",
+  "keywords": "purity"
+ },
+ {
+  "name": "chaste",
+  "keywords": "chastity"
+ },
+ {
+  "name": "repent",
+  "keywords": "repentance"
+ },
+ {
+  "name": "thank",
+  "keywords": "thanking"
+ },
+ {
+  "name": "compassion",
+  "keywords": "compassionate"
+ },
+ {
+  "name": "faith",
+  "keywords": "faithful"
+ },
+ {
+  "name": "fear",
+  "keywords": "fearing"
+ },
+ {
+  "name": "belief",
+  "keywords": "believe"
+ },
+ {
+  "name": "patient",
+  "keywords": "patience"
+ },
+ {
+  "name": "kind",
+  "keywords": "kindness"
+ },
+ {
+  "name": "happy",
+  "keywords": "happiness"
+ },
+ {
+  "name": "distress",
+  "keywords": "distressed"
+ },
+ {
+  "name": "discomfort",
+  "keywords": "discomforting"
+ },
+ {
+  "name": "unease",
+  "keywords": "uneasy"
+ },
+ {
+  "name": "sincerity",
+  "keywords": "sincere"
+ },
+ {
+  "name": "aspire",
+  "keywords": "aspiration"
+ },
+ {
+  "name": "weak",
+  "keywords": "weakness"
+ },
+ {
+  "name": "concern",
+  "keywords": "concerned"
+ },
+ {
+  "name": "displeasure",
+  "keywords": "displeasured"
+ },
+ {
+  "name": "pleasure",
+  "keywords": "pleasured"
+ },
+ {
+  "name": "nervous",
+  "keywords": "nervousness"
+ },
+ {
+  "name": "peace",
+  "keywords": "peaceful"
+ },
+ {
+  "name": "sufficient",
+  "keywords": "sufficience"
+ },
+ {
+  "name": "joy",
+  "keywords": "joyous"
+ },
+ {
+  "name": "caution",
+  "keywords": "cautious"
+ },
+ {
+  "name": "responsible",
+  "keywords": "responsibility"
+ },
+ {
+  "name": "worry",
+  "keywords": "worried"
+ },
+ {
+  "name": "desperate",
+  "keywords": "desperation"
+ },
+ {
+  "name": "suffer",
+  "keywords": "suffering"
+ },
+ {
+  "name": "pain",
+  "keywords": "painful"
+ },
+ {
+  "name": "lazy",
+  "keywords": "laziness"
+ },
+ {
+  "name": "burden",
+  "keywords": "burdened"
+ },
+ {
+  "name": "hardship",
+  "keywords": null
+ },
+ {
+  "name": "difficult",
+  "keywords": "difficulty"
+ },
+ {
+  "name": "confident",
+  "keywords": "confidence"
+ },
+ {
+  "name": "restless",
+  "keywords": "restlessness"
+ },
+ {
+  "name": "stress",
+  "keywords": "stressed"
+ },
+ {
+  "name": "tense",
+  "keywords": "tensed"
+ },
+ {
+  "name": "lost",
+  "keywords": null
+ },
+ {
+  "name": "confused",
+  "keywords": "confusion"
+ },
+ {
+  "name": "uncertain",
+  "keywords": "uncertainty"
+ },
+ {
+  "name": "panic",
+  "keywords": "panicking"
+ },
+ {
+  "name": "anger",
+  "keywords": "angry"
+ },
+ {
+  "name": "excite",
+  "keywords": "excited"
+ },
+ {
+  "name": "surrender",
+  "keywords": null
+ },
+ {
+  "name": "positive",
+  "keywords": "possitivity"
+ }
+]
