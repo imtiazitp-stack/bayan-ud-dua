@@ -1,0 +1,42 @@
+workflows:
+  android-build:
+    name: Bayan-udh-Dua — Android build
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Build Android APK (for quick testing on a real phone)
+        script: flutter build apk --release
+      - name: Build Android App Bundle (for Play Store submission)
+        script: flutter build appbundle --release
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+    publishing:
+      email:
+        recipients:
+          - imtiaz.itp@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # iOS workflow — enable this once you have an Apple Developer account
+  # ($99/year, at developer.apple.com) and have connected it inside
+  # Codemagic (Teams > Integrations > Apple Developer Portal).
+  # Until then, leave this workflow as-is; it simply won't run.
+  ios-build:
+    name: Bayan-udh-Dua — iOS build
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Build iOS (no code signing yet — needs Apple Developer setup)
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
