@@ -40,18 +40,18 @@ class HomeDashboardScreen extends StatelessWidget {
                   const SizedBox(height: 28),
                   Text('Popular duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
-                  for (final d in popular)
+                  for (var i = 0; i < popular.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 14),
-                      child: _DuaCard(dua: d),
+                      child: _DuaCard(duas: popular, index: i),
                     ),
                   const SizedBox(height: 14),
                   Text('Recommended duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
-                  for (final d in recommended)
+                  for (var i = 0; i < recommended.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 14),
-                      child: _DuaCard(dua: d),
+                      child: _DuaCard(duas: recommended, index: i),
                     ),
                 ],
               );
@@ -74,8 +74,14 @@ class _Greeting extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            'Bismillah hir Rahman nir Raheem',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+            style: GoogleFonts.amiri(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.titleMedium?.color,
+            ),
           ),
         ),
         IconButton(
@@ -146,8 +152,9 @@ class _HeroBanner extends StatelessWidget {
 }
 
 class _DuaCard extends StatefulWidget {
-  final Dua dua;
-  const _DuaCard({required this.dua});
+  final List<Dua> duas;
+  final int index;
+  const _DuaCard({required this.duas, required this.index});
 
   @override
   State<_DuaCard> createState() => _DuaCardState();
@@ -156,23 +163,25 @@ class _DuaCard extends StatefulWidget {
 class _DuaCardState extends State<_DuaCard> {
   bool _isFavorite = false;
 
+  Dua get _dua => widget.duas[widget.index];
+
   @override
   void initState() {
     super.initState();
-    FavoritesService.instance.isFavorite(widget.dua.appId).then((v) {
+    FavoritesService.instance.isFavorite(_dua.appId).then((v) {
       if (mounted) setState(() => _isFavorite = v);
     });
   }
 
   Future<void> _toggleFavorite() async {
-    await FavoritesService.instance.toggle(widget.dua.appId);
-    final v = await FavoritesService.instance.isFavorite(widget.dua.appId);
+    await FavoritesService.instance.toggle(_dua.appId);
+    final v = await FavoritesService.instance.isFavorite(_dua.appId);
     if (mounted) setState(() => _isFavorite = v);
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.dua;
+    final d = _dua;
     final tags = d.emotion.take(2).toList();
     final overflow = d.emotion.length - tags.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -182,7 +191,9 @@ class _DuaCardState extends State<_DuaCard> {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => DuaDetailScreen(dua: d)),
+          MaterialPageRoute(
+            builder: (_) => DuaDetailScreen(duas: widget.duas, initialIndex: widget.index),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
