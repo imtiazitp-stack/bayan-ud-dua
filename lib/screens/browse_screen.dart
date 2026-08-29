@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/dua_card.dart';
 import '../widgets/gradient_background.dart';
 import 'dua_detail_screen.dart';
 import 'dua_list_screen.dart';
@@ -83,6 +84,7 @@ class _NumberList extends StatelessWidget {
         final afterSalah = _range(duas, 29, 39);
         final otherDuas = _range(duas, 40, 93);
         final muwaqqat = _range(duas, 94, 140);
+        final durood = duas.where((d) => d.appId == 141).toList();
 
         return ListView(
           children: [
@@ -91,7 +93,7 @@ class _NumberList extends StatelessWidget {
               title: const Text('First Chapter — Ghair Muwaqqat (1–70)'),
               subtitle: const Text('Duas read daily and at all times'),
               children: [
-                const _DuroodIntroCard(),
+                if (durood.isNotEmpty) _DuroodIntroCard(dua: durood.first),
                 _NumberCategory(title: 'Morning & Evening Duas', duas: morningEvening, indent: true),
                 _NumberCategory(title: 'Dua after Salah', duas: afterSalah, indent: true),
                 _NumberCategory(title: 'Other Duas', duas: otherDuas, indent: true),
@@ -126,18 +128,14 @@ class _NumberCategory extends StatelessWidget {
       subtitle: Text('${duas.length} duas'),
       children: [
         for (var i = 0; i < duas.length; i++)
-          ListTile(
-            contentPadding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
-            leading: CircleAvatar(child: Text(duas[i].duaNo)),
-            title: Text(duas[i].title.isNotEmpty ? duas[i].title : 'Dua ${duas[i].duaNo}'),
-            subtitle: Text(
-              duas[i].translation,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
+          Padding(
+            padding: EdgeInsets.fromLTRB(indent ? 32 : 16, 0, 16, 10),
+            child: DuaCard(
+              dua: duas[i],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
+                ),
               ),
             ),
           ),
@@ -148,33 +146,42 @@ class _NumberCategory extends StatelessWidget {
 
 /// The durood recited before starting the chapter's duas (book page 34).
 /// It isn't itself a numbered dua in the book, so it's shown as a static
-/// card rather than forced into the swipeable dua list.
+/// intro card — not tappable, not part of the swipeable dua list — right
+/// before the first sub-section starts.
 class _DuroodIntroCard extends StatelessWidget {
-  const _DuroodIntroCard();
+  final Dua dua;
+  const _DuroodIntroCard({required this.dua});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      padding: const EdgeInsets.fromLTRB(32, 4, 16, 16),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Durood — before starting the duas', style: Theme.of(context).textTheme.labelLarge),
+              Text(dua.title, style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 10),
               Text(
-                'الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِيْنَ، اَللّٰهُمَّ اجْعَلْ صَلَوَاتِكَ وَرَحْمَتَكَ وَبَرَكَاتِكَ عَلٰى سَيِّدِ الْمُرْسَلِيْنَ وَاِمَامِ الْمُتَّقِيْنَ وَخَاتَمِ النَّبِيِّيْنَ مُحَمَّدٍ عَبْدِكَ وَرَسُوْلِكَ اِمَامِ الْخَيْرِ وَقَائِدِ الْخَيْرِ وَرَسُوْلِ الرَّحْمَةِ اَللّٰهُمَّ ابْعَثْهُ مَقَامًا مَّحْمُوْدًا يَغْبِطُهُ بِهِ الْاَوَّلُوْنَ وَالْاٰخِرُوْنَ۔ اَللّٰهُمَّ صَلِّ عَلٰى مُحَمَّدٍ وَّعَلٰى اٰلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلٰى اِبْرَاهِيْمَ وَعَلٰى اٰلِ اِبْرَاهِيْمَ اِنَّكَ حَمِيْدٌ مَّجِيْدٌ۔ اَللّٰهُمَّ بَارِكْ عَلٰى مُحَمَّدٍ وَعَلٰى اٰلِ مُحَمَّدٍ كَمَا بَارَكْتَ عَلٰى اِبْرَاهِيْمَ وَعَلٰى اٰلِ اِبْرَاهِيْمَ اِنَّكَ حَمِيْدٌ مَّجِيْدٌ۔',
+                dua.arabic,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
                 style: GoogleFonts.amiri(fontSize: 19, height: 1.9),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'This particular durood is reported by Hazrat Abdullah bin Masood (R.A).',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              if (dua.transliteration.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(dua.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
+              ],
+              if (dua.translation.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(dua.translation),
+              ],
+              if (dua.tafsir.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(dua.tafsir, style: Theme.of(context).textTheme.bodySmall),
+              ],
             ],
           ),
         ),
