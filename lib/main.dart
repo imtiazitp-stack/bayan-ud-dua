@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() {
   runApp(const BayanUdhDuaApp());
@@ -36,7 +37,11 @@ class BayanUdhDuaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bayan-udh-Dua',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
+      // Every screen so far has been designed against the light Figma
+      // palette only — always use it, regardless of the device's system
+      // dark/light setting, so the app doesn't fall back to an unstyled
+      // dark background on phones that default to dark mode.
+      themeMode: ThemeMode.light,
       theme: ThemeData(
         colorScheme: lightScheme,
         useMaterial3: true,
@@ -60,7 +65,26 @@ class BayanUdhDuaApp extends StatelessWidget {
           backgroundColor: darkBackground,
         ),
       ),
-      home: const HomeScreen(),
+      home: const _AppEntry(),
+    );
+  }
+}
+
+/// Shows the first-run onboarding walkthrough once, then always the
+/// normal home screen after that (tracked via shared_preferences).
+class _AppEntry extends StatelessWidget {
+  const _AppEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: OnboardingScreen.hasCompletedOnboarding(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        return snapshot.data! ? const HomeScreen() : const OnboardingScreen();
+      },
     );
   }
 }
