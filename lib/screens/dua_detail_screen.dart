@@ -6,15 +6,62 @@ import '../models/dua.dart';
 import '../services/favorites_service.dart';
 import '../widgets/gradient_background.dart';
 
+/// Shows a dua with swipe-to-browse: swiping left/right moves to the
+/// next/previous dua in whatever list the user came from (By Number,
+/// By Situation, By Emotion, Search, Favorites, or a Home card list),
+/// so people don't have to keep backing out to the list and tapping
+/// the next one. Vertical swipe isn't used for this since the dua's
+/// own text already scrolls vertically.
 class DuaDetailScreen extends StatefulWidget {
-  final Dua dua;
-  const DuaDetailScreen({super.key, required this.dua});
+  final List<Dua> duas;
+  final int initialIndex;
+
+  const DuaDetailScreen({
+    super.key,
+    required this.duas,
+    required this.initialIndex,
+  });
+
+  /// Convenience for the rare case where only a single dua is known,
+  /// with nothing to swipe to.
+  factory DuaDetailScreen.single(Dua dua, {Key? key}) =>
+      DuaDetailScreen(key: key, duas: [dua], initialIndex: 0);
 
   @override
   State<DuaDetailScreen> createState() => _DuaDetailScreenState();
 }
 
 class _DuaDetailScreenState extends State<DuaDetailScreen> {
+  late final _pageController = PageController(initialPage: widget.initialIndex);
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: widget.duas.length,
+      itemBuilder: (context, i) => _DuaDetailPage(
+        key: ValueKey(widget.duas[i].appId),
+        dua: widget.duas[i],
+      ),
+    );
+  }
+}
+
+class _DuaDetailPage extends StatefulWidget {
+  final Dua dua;
+  const _DuaDetailPage({super.key, required this.dua});
+
+  @override
+  State<_DuaDetailPage> createState() => _DuaDetailPageState();
+}
+
+class _DuaDetailPageState extends State<_DuaDetailPage> {
   final _player = AudioPlayer();
   bool _isFavorite = false;
   bool _audioReady = false;
@@ -105,49 +152,49 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
       ),
       body: GradientBackground(
         child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          if (d.title.isNotEmpty)
-            Text(d.title, style: Theme.of(context).textTheme.titleMedium),
-          if (d.situation.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                d.situation,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+          padding: const EdgeInsets.all(20),
+          children: [
+            if (d.title.isNotEmpty)
+              Text(d.title, style: Theme.of(context).textTheme.titleMedium),
+            if (d.situation.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  d.situation,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
               ),
+            const SizedBox(height: 20),
+            Text(
+              d.arabic,
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+              style: GoogleFonts.amiri(fontSize: 26, height: 1.9),
             ),
-          const SizedBox(height: 20),
-          Text(
-            d.arabic,
-            textAlign: TextAlign.right,
-            textDirection: TextDirection.rtl,
-            style: GoogleFonts.amiri(fontSize: 26, height: 1.9),
-          ),
-          const SizedBox(height: 20),
-          if (d.transliteration.isNotEmpty) ...[
-            Text('Transliteration', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 6),
-            Text(d.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            if (d.transliteration.isNotEmpty) ...[
+              Text('Transliteration', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 6),
+              Text(d.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
+              const SizedBox(height: 16),
+            ],
+            if (d.translation.isNotEmpty) ...[
+              Text('Translation', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 6),
+              Text(d.translation),
+              const SizedBox(height: 16),
+            ],
+            if (d.tafsir.isNotEmpty) ...[
+              Text('Tafsir / Hadith', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 6),
+              Text(d.tafsir),
+              const SizedBox(height: 16),
+            ],
+            // Leaves room so the audio bar doesn't cover the last line of text.
+            const SizedBox(height: 90),
           ],
-          if (d.translation.isNotEmpty) ...[
-            Text('Translation', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 6),
-            Text(d.translation),
-            const SizedBox(height: 16),
-          ],
-          if (d.tafsir.isNotEmpty) ...[
-            Text('Tafsir / Hadith', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 6),
-            Text(d.tafsir),
-            const SizedBox(height: 16),
-          ],
-          // Leaves room so the audio bar doesn't cover the last line of text.
-          const SizedBox(height: 90),
-        ],
         ),
       ),
       bottomNavigationBar: SafeArea(
