@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../services/favorites_service.dart';
+import '../widgets/gradient_background.dart';
 import 'browse_screen.dart';
 import 'dua_detail_screen.dart';
 import 'favorites_screen.dart';
@@ -16,22 +17,8 @@ class HomeDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? null
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFFBF9E2),
-                    Color(0xFFE1EBC8),
-                    Color(0xFFCCDEA3),
-                  ],
-                ),
-        ),
+      body: GradientBackground(
         child: SafeArea(
           child: FutureBuilder<List<Dua>>(
             future: DuaRepository.instance.loadAll(),
@@ -85,9 +72,11 @@ class _Greeting extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'As-Salaam-Alaikum',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        Expanded(
+          child: Text(
+            'Bismillah hir Rahman nir Raheem',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
         ),
         IconButton(
           icon: Icon(Icons.favorite_outline, color: primary),
