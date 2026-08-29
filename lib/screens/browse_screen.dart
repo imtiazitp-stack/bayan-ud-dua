@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/gradient_background.dart';
 import 'dua_detail_screen.dart';
 import 'dua_list_screen.dart';
 
@@ -27,18 +28,20 @@ class BrowseScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            const _NumberList(),
-            _CategoryList(
-              loader: () => DuaRepository.instance.loadSituations(),
-              onTap: (value) => _openList(context, situation: value),
-            ),
-            _CategoryList(
-              loader: () => DuaRepository.instance.loadEmotions(),
-              onTap: (value) => _openList(context, emotion: value),
-            ),
-          ],
+        body: GradientBackground(
+          child: TabBarView(
+            children: [
+              const _NumberList(),
+              _CategoryList(
+                loader: () => DuaRepository.instance.loadSituations(),
+                onTap: (value) => _openList(context, situation: value),
+              ),
+              _CategoryList(
+                loader: () => DuaRepository.instance.loadEmotions(),
+                onTap: (value) => _openList(context, emotion: value),
+              ),
+            ],
+          ),
         ),
       ),
     );
