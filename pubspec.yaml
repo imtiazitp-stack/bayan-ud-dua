@@ -36,3 +36,4 @@ flutter:
     - assets/data/emotions.json
     - assets/data/situations.json
     - assets/audio/
+    - assets/images/
