@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'home_dashboard_screen.dart';
 import 'browse_screen.dart';
 import 'search_screen.dart';
 import 'favorites_screen.dart';
 
-/// Root screen: three tabs mirroring how the team already organizes
-/// content (Browse by situation/emotion, Search, Favorites).
-/// This is deliberately shallow — the book's own chapter structure
-/// (from the Content sheet) drives the "Browse" tab.
+/// Root screen: four tabs mirroring how the team already organizes
+/// content (a Home dashboard, Browse by situation/emotion/number,
+/// Search, Favorites). This is deliberately shallow — the book's own
+/// chapter structure (from the Content sheet) drives the "Browse" tab.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
   static const _screens = [
+    HomeDashboardScreen(),
     BrowseScreen(),
     SearchScreen(),
     FavoritesScreen(),
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: 'Browse'),
           NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
           NavigationDestination(icon: Icon(Icons.favorite_outline), label: 'Favorites'),
