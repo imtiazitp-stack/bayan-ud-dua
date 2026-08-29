@@ -133,9 +133,12 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   @override
   Widget build(BuildContext context) {
     final d = widget.dua;
+    // The Istighfaar section (appId 1-15) is its own book chapter, so its
+    // heading reads "Istighfar N" rather than the generic "Dua N".
+    final heading = d.appId <= 15 ? 'Istighfar ${d.duaNo}' : 'Dua ${d.duaNo}';
     return Scaffold(
       appBar: AppBar(
-        title: Text('Dua ${d.duaNo}'),
+        title: Text(heading),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
