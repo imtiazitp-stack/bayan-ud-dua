@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/dua_card.dart';
 import '../widgets/gradient_background.dart';
 import 'dua_detail_screen.dart';
 
@@ -39,22 +40,18 @@ class DuaListScreen extends StatelessWidget {
             if (duas.isEmpty) {
               return const Center(child: Text('No duas found'));
             }
-            return ListView.separated(
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: duas.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, i) {
-                final d = duas[i];
-                return ListTile(
-                  leading: CircleAvatar(child: Text(d.duaNo)),
-                  title: Text(d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}'),
-                  subtitle: Text(
-                    d.translation,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: DuaCard(
+                    dua: duas[i],
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
+                      ),
                     ),
                   ),
                 );
