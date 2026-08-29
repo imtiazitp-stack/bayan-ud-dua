@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/dua.dart';
 import '../services/favorites_service.dart';
+import '../widgets/gradient_background.dart';
 
 class DuaDetailScreen extends StatefulWidget {
   final Dua dua;
@@ -65,6 +67,16 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
     return '$minutes:$seconds';
   }
 
+  void _shareDua(Dua d) {
+    final buffer = StringBuffer();
+    if (d.title.isNotEmpty) buffer.writeln(d.title);
+    buffer.writeln(d.arabic);
+    if (d.transliteration.isNotEmpty) buffer.writeln(d.transliteration);
+    if (d.translation.isNotEmpty) buffer.writeln(d.translation);
+    buffer.write('\n— shared from Bayan-udh-Dua');
+    Share.share(buffer.toString());
+  }
+
   @override
   void dispose() {
     _player.dispose();
@@ -79,6 +91,10 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
         title: Text('Dua ${d.duaNo}'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () => _shareDua(d),
+          ),
+          IconButton(
             icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_outline),
             onPressed: () async {
               await FavoritesService.instance.toggle(d.appId);
@@ -87,7 +103,8 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
           ),
         ],
       ),
-      body: ListView(
+      body: GradientBackground(
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           if (d.title.isNotEmpty)
@@ -128,13 +145,10 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
             Text(d.tafsir),
             const SizedBox(height: 16),
           ],
-          Text(
-            'Page ${d.page} in Bayan-udh-Dua',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
           // Leaves room so the audio bar doesn't cover the last line of text.
           const SizedBox(height: 90),
         ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
