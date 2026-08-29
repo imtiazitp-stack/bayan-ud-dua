@@ -1,7 +1,7 @@
 name: bayan_ud_dua
 description: "Bayan-udh-Dua — a collection of authentic duas, azkar and istighfar"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -13,6 +13,7 @@ dependencies:
   just_audio: ^0.9.36          # audio playback (works well on iOS + Android)
   shared_preferences: ^2.2.2   # favorites + last-read, stored on-device
   google_fonts: ^6.2.1         # for a proper Arabic-friendly font (e.g. Amiri/Lateef)
+  share_plus: ^10.1.2          # native share sheet for sending a dua elsewhere
 
 dev_dependencies:
   flutter_test:
