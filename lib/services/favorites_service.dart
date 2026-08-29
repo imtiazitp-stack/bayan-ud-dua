@@ -1,9 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stores favorited dua ids on-device (no account/login needed).
 /// Uses Dua.appId (an int) so it survives any future re-ordering
 /// of the book content without breaking a user's saved favorites.
-class FavoritesService {
+///
+/// Extends ChangeNotifier so the Favorites tab (kept alive inside an
+/// IndexedStack, so it never naturally rebuilds on tab switch) updates
+/// immediately when a heart is tapped anywhere else in the app.
+class FavoritesService extends ChangeNotifier {
   FavoritesService._();
   static final FavoritesService instance = FavoritesService._();
 
@@ -41,5 +46,6 @@ class FavoritesService {
       _key,
       _favorites.map((e) => e.toString()).toList(),
     );
+    notifyListeners();
   }
 }
