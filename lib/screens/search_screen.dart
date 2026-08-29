@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/gradient_background.dart';
 import 'dua_list_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -27,23 +28,25 @@ class _SearchScreenState extends State<SearchScreen> {
           controller: _controller,
           autofocus: false,
           decoration: const InputDecoration(
-            hintText: 'Search duas, situations, feelings…',
+            hintText: 'Search by dua number, situation or emotion',
             border: InputBorder.none,
           ),
           onChanged: _onChanged,
         ),
       ),
-      body: _controller.text.isEmpty
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Try "travel", "forgiveness", "sleep", or "anxious"',
-                  textAlign: TextAlign.center,
+      body: GradientBackground(
+        child: _controller.text.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Try "travel", "forgiveness", "sleep", or "anxious"',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-            )
-          : DuaListScreen(preloaded: _results),
+              )
+            : DuaListScreen(preloaded: _results),
+      ),
     );
   }
 }
