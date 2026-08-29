@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/dua.dart';
 import '../services/favorites_service.dart';
@@ -81,7 +82,7 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
             d.arabic,
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
-            style: const TextStyle(fontSize: 26, height: 1.9),
+            style: GoogleFonts.amiri(fontSize: 26, height: 1.9),
           ),
           const SizedBox(height: 20),
           if (d.transliteration.isNotEmpty) ...[
