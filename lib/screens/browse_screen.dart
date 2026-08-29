@@ -21,14 +21,15 @@ class BrowseScreen extends StatelessWidget {
           title: const Text('Bayan-udh-Dua'),
           bottom: const TabBar(
             tabs: [
+              Tab(text: 'By Number'),
               Tab(text: 'By Situation'),
               Tab(text: 'By Emotion'),
-              Tab(text: 'By Number'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
+            const _NumberList(),
             _CategoryList(
               loader: () => DuaRepository.instance.loadSituations(),
               onTap: (value) => _openList(context, situation: value),
@@ -37,7 +38,6 @@ class BrowseScreen extends StatelessWidget {
               loader: () => DuaRepository.instance.loadEmotions(),
               onTap: (value) => _openList(context, emotion: value),
             ),
-            const _NumberList(),
           ],
         ),
       ),
