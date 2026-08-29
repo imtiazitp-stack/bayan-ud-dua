@@ -32,12 +32,37 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
   Future<void> _prepareAudio() async {
     try {
       await _player.setAsset('assets/${widget.dua.audio}');
+      // just_audio leaves position at the end once playback completes, so a
+      // second tap on play does nothing audible unless we rewind first.
+      _player.processingStateStream.listen((state) {
+        if (state == ProcessingState.completed) {
+          _player.pause();
+          _player.seek(Duration.zero);
+        }
+      });
       if (mounted) setState(() => _audioReady = true);
     } catch (_) {
-      // Audio file missing for this dua — button stays disabled below.
+      // Audio file missing for this dua — bar stays disabled below.
       // Drop the matching mp3 into assets/audio/ using the filename
       // in dua.audio (see assets/data/duas.json) to enable it.
     }
+  }
+
+  Future<void> _togglePlay(bool playing) async {
+    if (_player.processingState == ProcessingState.completed) {
+      await _player.seek(Duration.zero);
+    }
+    if (playing) {
+      _player.pause();
+    } else {
+      _player.play();
+    }
+  }
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   @override
@@ -107,19 +132,105 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
             'Page ${d.page} in Bayan-udh-Dua',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          // Leaves room so the audio bar doesn't cover the last line of text.
+          const SizedBox(height: 90),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _audioReady
-            ? () => _player.playing ? _player.pause() : _player.play()
-            : null,
-        icon: StreamBuilder<bool>(
-          stream: _player.playingStream,
-          builder: (context, snap) => Icon(
-            snap.data == true ? Icons.pause : Icons.play_arrow,
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(8, 4, 20, 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 6,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
+          child: !_audioReady
+              ? const ListTile(
+                  leading: Icon(Icons.music_off),
+                  title: Text('Audio unavailable'),
+                )
+              : StreamBuilder<PlayerState>(
+                  stream: _player.playerStateStream,
+                  builder: (context, snapshot) {
+                    final playing = snapshot.data?.playing ?? false;
+                    return StreamBuilder<Duration>(
+                      stream: _player.positionStream,
+                      builder: (context, posSnapshot) {
+                        final position = posSnapshot.data ?? Duration.zero;
+                        final duration = _player.duration ?? Duration.zero;
+                        final maxMs = duration.inMilliseconds > 0
+                            ? duration.inMilliseconds.toDouble()
+                            : 1.0;
+                        final valueMs = position.inMilliseconds
+                            .clamp(0, maxMs.round())
+                            .toDouble();
+                        return Row(
+                          children: [
+                            IconButton(
+                              iconSize: 40,
+                              icon: Icon(
+                                playing
+                                    ? Icons.pause_circle_filled
+                                    : Icons.play_circle_filled,
+                              ),
+                              onPressed: () => _togglePlay(playing),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      trackHeight: 3,
+                                      thumbShape: const RoundSliderThumbShape(
+                                        enabledThumbRadius: 6,
+                                      ),
+                                    ),
+                                    child: Slider(
+                                      value: valueMs,
+                                      max: maxMs,
+                                      onChanged: (value) {
+                                        _player.seek(
+                                          Duration(milliseconds: value.round()),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          _formatDuration(position),
+                                          style:
+                                              Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                        Text(
+                                          _formatDuration(duration),
+                                          style:
+                                              Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
         ),
-        label: Text(_audioReady ? 'Play recitation' : 'Audio unavailable'),
       ),
     );
   }
