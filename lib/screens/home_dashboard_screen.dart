@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
-import '../services/favorites_service.dart';
+import '../widgets/dua_card.dart';
 import '../widgets/gradient_background.dart';
 import 'browse_screen.dart';
 import 'dua_detail_screen.dart';
@@ -43,7 +44,14 @@ class HomeDashboardScreen extends StatelessWidget {
                   for (var i = 0; i < popular.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 14),
-                      child: _DuaCard(duas: popular, index: i),
+                      child: DuaCard(
+                        dua: popular[i],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DuaDetailScreen(duas: popular, initialIndex: i),
+                          ),
+                        ),
+                      ),
                     ),
                   const SizedBox(height: 14),
                   Text('Recommended duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
@@ -51,7 +59,14 @@ class HomeDashboardScreen extends StatelessWidget {
                   for (var i = 0; i < recommended.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 14),
-                      child: _DuaCard(duas: recommended, index: i),
+                      child: DuaCard(
+                        dua: recommended[i],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DuaDetailScreen(duas: recommended, initialIndex: i),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               );
@@ -65,6 +80,12 @@ class HomeDashboardScreen extends StatelessWidget {
 
 class _Greeting extends StatelessWidget {
   const _Greeting();
+
+  void _shareApp() {
+    Share.share(
+      'Check out Bayan-udh-Dua — a collection of authentic duas, azkar and istighfar for daily recitation.',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +104,10 @@ class _Greeting extends StatelessWidget {
               color: Theme.of(context).textTheme.titleMedium?.color,
             ),
           ),
+        ),
+        IconButton(
+          icon: Icon(Icons.share_outlined, color: primary),
+          onPressed: _shareApp,
         ),
         IconButton(
           icon: Icon(Icons.favorite_outline, color: primary),
@@ -146,128 +171,6 @@ class _HeroBanner extends StatelessWidget {
           ),
           Image.asset('assets/images/open_book_icon.png', width: 84, height: 84),
         ],
-      ),
-    );
-  }
-}
-
-class _DuaCard extends StatefulWidget {
-  final List<Dua> duas;
-  final int index;
-  const _DuaCard({required this.duas, required this.index});
-
-  @override
-  State<_DuaCard> createState() => _DuaCardState();
-}
-
-class _DuaCardState extends State<_DuaCard> {
-  bool _isFavorite = false;
-
-  Dua get _dua => widget.duas[widget.index];
-
-  @override
-  void initState() {
-    super.initState();
-    FavoritesService.instance.isFavorite(_dua.appId).then((v) {
-      if (mounted) setState(() => _isFavorite = v);
-    });
-  }
-
-  Future<void> _toggleFavorite() async {
-    await FavoritesService.instance.toggle(_dua.appId);
-    final v = await FavoritesService.instance.isFavorite(_dua.appId);
-    if (mounted) setState(() => _isFavorite = v);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final d = _dua;
-    final tags = d.emotion.take(2).toList();
-    final overflow = d.emotion.length - tags.length;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DuaDetailScreen(duas: widget.duas, initialIndex: widget.index),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_outline, size: 20),
-                    onPressed: _toggleFavorite,
-                  ),
-                ],
-              ),
-              if (d.arabic.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text(
-                    d.arabic,
-                    textAlign: TextAlign.right,
-                    textDirection: TextDirection.rtl,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.amiri(fontSize: 18),
-                  ),
-                ),
-              Text(
-                d.translation,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (tags.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final t in tags) _Tag(t),
-                    if (overflow > 0) _Tag('+$overflow'),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String label;
-  const _Tag(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: primary),
       ),
     );
   }
