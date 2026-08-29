@@ -53,7 +53,9 @@ class DuaListScreen extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => DuaDetailScreen(dua: d)),
+                    MaterialPageRoute(
+                      builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
+                    ),
                   ),
                 );
               },
