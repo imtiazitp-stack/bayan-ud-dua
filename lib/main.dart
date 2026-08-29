@@ -11,18 +11,54 @@ class BayanUdhDuaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A warm, restrained palette — replace seedColor with your brand
-    // color from the Figma file once it's exported.
-    const seed = Color(0xFF2F6F5E);
+    // Palette from the Figma style guide (BuD_All), Green theme.
+    const primary = Color(0xFF51A3A1);
+    const secondary = Color(0xFFEEE8A9);
+    const lightBackground = Color(0xFFFBF9E2);
+    const darkBackground = Color(0xFF161216);
+    const darkCard = Color(0xFF272531);
+
+    final lightScheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.light,
+    ).copyWith(primary: primary, secondary: secondary, surface: lightBackground);
+
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: primary,
+      secondary: secondary,
+      surface: darkBackground,
+      surfaceContainer: darkCard,
+    );
 
     return MaterialApp(
       title: 'Bayan-udh-Dua',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+        colorScheme: lightScheme,
         useMaterial3: true,
-        textTheme: GoogleFonts.interTextTheme(),
-        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
+        scaffoldBackgroundColor: lightBackground,
+        textTheme: GoogleFonts.outfitTextTheme(),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: lightBackground,
+        ),
+      ),
+      darkTheme: ThemeData(
+        colorScheme: darkScheme,
+        useMaterial3: true,
+        scaffoldBackgroundColor: darkBackground,
+        cardColor: darkCard,
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData(brightness: Brightness.dark).textTheme),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: darkBackground,
+        ),
       ),
       home: const HomeScreen(),
     );
