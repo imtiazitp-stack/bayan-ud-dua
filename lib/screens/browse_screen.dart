@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import 'dua_detail_screen.dart';
 import 'dua_list_screen.dart';
 
-/// Lets the person browse by "Situation" (e.g. Travel, Sleep, Illness)
-/// or by "Emotion" (e.g. Guilt, Fear, Gratitude) — both taxonomies
-/// already exist in the team's spreadsheet, so this reuses them
-/// directly instead of inventing a new structure.
+/// Lets the person browse by "Situation" (e.g. Travel, Sleep, Illness),
+/// by "Emotion" (e.g. Guilt, Fear, Gratitude), or "By Number" — the
+/// duas in the same order they're printed in the book. The first two
+/// taxonomies already exist in the team's spreadsheet, so this reuses
+/// them directly instead of inventing a new structure.
 class BrowseScreen extends StatelessWidget {
   const BrowseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bayan-udh-Dua'),
@@ -20,6 +23,7 @@ class BrowseScreen extends StatelessWidget {
             tabs: [
               Tab(text: 'By Situation'),
               Tab(text: 'By Emotion'),
+              Tab(text: 'By Number'),
             ],
           ),
         ),
@@ -33,6 +37,7 @@ class BrowseScreen extends StatelessWidget {
               loader: () => DuaRepository.instance.loadEmotions(),
               onTap: (value) => _openList(context, emotion: value),
             ),
+            const _NumberList(),
           ],
         ),
       ),
@@ -43,6 +48,44 @@ class BrowseScreen extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => DuaListScreen(situation: situation, emotion: emotion),
     ));
+  }
+}
+
+/// Shows every dua in book order (by `duaNo`), for readers who already
+/// know which number they're looking for.
+class _NumberList extends StatelessWidget {
+  const _NumberList();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Dua>>(
+      future: DuaRepository.instance.loadAll(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final duas = snapshot.data!;
+        return ListView.separated(
+          itemCount: duas.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final d = duas[i];
+            return ListTile(
+              leading: CircleAvatar(child: Text(d.duaNo)),
+              title: Text(d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}'),
+              subtitle: Text(
+                d.translation,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => DuaDetailScreen(dua: d)),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }
 
