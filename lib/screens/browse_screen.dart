@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../widgets/dua_card.dart';
@@ -67,8 +66,47 @@ class BrowseScreen extends StatelessWidget {
 class _NumberList extends StatelessWidget {
   const _NumberList();
 
+  static const _sicknessCalamityLabel =
+      'Duas read at times of sickness, calamities and other such occasions';
+  static const _sicknessCalamitySituations = {
+    'Dua for pain and illness',
+    'Dua for a person who becomes frail due to severe illness or difficulty',
+    'When afflicted with great calamity',
+    'Dua for times of grief and worry',
+    'Dua for removal of worry and grief and fulfilment of debt',
+  };
+
   List<Dua> _range(List<Dua> duas, int from, int to) =>
       duas.where((d) => d.appId >= from && d.appId <= to).toList();
+
+  /// Groups duas by their `situation` tag, in first-appearance order — this
+  /// is how the old app split "First Chapter"/"Second Chapter" into named
+  /// sub-sections (Entering Home, After Eating, Istikhara, ...) instead of
+  /// one flat list. A handful of related situations can be folded into one
+  /// broader bucket via [mergeInto]/[mergedLabel] (used for the "sickness,
+  /// calamities" grouping). Duas whose situation is unique to them use
+  /// their own title as the label instead of the (often long) situation
+  /// text, since a one-off dua reads better under its own name.
+  Map<String, List<Dua>> _groupBySituation(
+    List<Dua> duas, {
+    Set<String>? mergeInto,
+    String? mergedLabel,
+  }) {
+    final groups = <String, List<Dua>>{};
+    for (final d in duas) {
+      final merged = mergeInto != null && mergeInto.contains(d.situation);
+      final key = merged
+          ? mergedLabel!
+          : (d.situation.isNotEmpty ? d.situation : (d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}'));
+      groups.putIfAbsent(key, () => []).add(d);
+    }
+    final result = <String, List<Dua>>{};
+    groups.forEach((key, list) {
+      final useTitle = list.length == 1 && list.first.title.isNotEmpty && key == list.first.situation;
+      result[useTitle ? list.first.title : key] = list;
+    });
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +122,12 @@ class _NumberList extends StatelessWidget {
         final afterSalah = _range(duas, 29, 39);
         final otherDuas = _range(duas, 40, 93);
         final muwaqqat = _range(duas, 94, 140);
-        final durood = duas.where((d) => d.appId == 141).toList();
+        final otherGroups = _groupBySituation(otherDuas);
+        final muwaqqatGroups = _groupBySituation(
+          muwaqqat,
+          mergeInto: _sicknessCalamitySituations,
+          mergedLabel: _sicknessCalamityLabel,
+        );
 
         return ListView(
           children: [
@@ -93,15 +136,18 @@ class _NumberList extends StatelessWidget {
               title: const Text('First Chapter — Ghair Muwaqqat (1–70)'),
               subtitle: const Text('Duas read daily and at all times'),
               children: [
-                if (durood.isNotEmpty) _DuroodIntroCard(dua: durood.first),
                 _NumberCategory(title: 'Morning & Evening Duas', duas: morningEvening, indent: true),
                 _NumberCategory(title: 'Dua after Salah', duas: afterSalah, indent: true),
-                _NumberCategory(title: 'Other Duas', duas: otherDuas, indent: true),
+                for (final entry in otherGroups.entries)
+                  _NumberCategory(title: entry.key, duas: entry.value, indent: true),
               ],
             ),
-            _NumberCategory(
-              title: 'Second Chapter — Muwaqqat (71–110)',
-              duas: muwaqqat,
+            ExpansionTile(
+              title: const Text('Second Chapter — Muwaqqat (71–110)'),
+              children: [
+                for (final entry in muwaqqatGroups.entries)
+                  _NumberCategory(title: entry.key, duas: entry.value, indent: true),
+              ],
             ),
           ],
         );
@@ -140,52 +186,6 @@ class _NumberCategory extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// The durood recited before starting the chapter's duas (book page 34).
-/// It isn't itself a numbered dua in the book, so it's shown as a static
-/// intro card — not tappable, not part of the swipeable dua list — right
-/// before the first sub-section starts.
-class _DuroodIntroCard extends StatelessWidget {
-  final Dua dua;
-  const _DuroodIntroCard({required this.dua});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 4, 16, 16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(dua.title, style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 10),
-              Text(
-                dua.arabic,
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-                style: GoogleFonts.amiri(fontSize: 19, height: 1.9),
-              ),
-              if (dua.transliteration.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(dua.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
-              ],
-              if (dua.translation.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(dua.translation),
-              ],
-              if (dua.tafsir.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(dua.tafsir, style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
