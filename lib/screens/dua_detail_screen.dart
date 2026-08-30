@@ -154,7 +154,9 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
         ],
       ),
       body: GradientBackground(
-        child: ListView(
+        child: Scrollbar(
+          thumbVisibility: true,
+          child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             if (d.title.isNotEmpty)
@@ -198,6 +200,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
             // Leaves room so the audio bar doesn't cover the last line of text.
             const SizedBox(height: 90),
           ],
+          ),
         ),
       ),
       bottomNavigationBar: SafeArea(
