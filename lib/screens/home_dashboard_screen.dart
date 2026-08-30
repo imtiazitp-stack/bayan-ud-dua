@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../widgets/dua_card.dart';
+import '../widgets/durood_intro_card.dart';
 import '../widgets/gradient_background.dart';
 import 'browse_screen.dart';
 import 'dua_detail_screen.dart';
@@ -32,12 +33,17 @@ class HomeDashboardScreen extends StatelessWidget {
               final recommended = duas.length > 15
                   ? duas.sublist(10, 15)
                   : duas.skip(5).take(5).toList();
+              final durood = duas.where((d) => d.appId == 141).toList();
               return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   const _Greeting(),
                   const SizedBox(height: 20),
                   const _HeroBanner(),
+                  if (durood.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    DuroodIntroCard(dua: durood.first),
+                  ],
                   const SizedBox(height: 28),
                   Text('Popular duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
