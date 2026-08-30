@@ -48,6 +48,7 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
       itemBuilder: (context, i) => _DuaDetailPage(
         key: ValueKey(widget.duas[i].appId),
         dua: widget.duas[i],
+        total: widget.duas.length,
       ),
     );
   }
@@ -55,20 +56,25 @@ class _DuaDetailScreenState extends State<DuaDetailScreen> {
 
 class _DuaDetailPage extends StatefulWidget {
   final Dua dua;
-  const _DuaDetailPage({super.key, required this.dua});
+  final int total;
+  const _DuaDetailPage({super.key, required this.dua, required this.total});
 
   @override
   State<_DuaDetailPage> createState() => _DuaDetailPageState();
 }
 
-class _DuaDetailPageState extends State<_DuaDetailPage> {
+class _DuaDetailPageState extends State<_DuaDetailPage> with SingleTickerProviderStateMixin {
+  static const _tabLabels = ['Dua', 'Closing notes', 'Introduction', 'Virtues of Dua', 'Types of Dua'];
+
   final _player = AudioPlayer();
+  late final TabController _tabController;
   bool _isFavorite = false;
   bool _audioReady = false;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: _tabLabels.length, vsync: this);
     _loadFavoriteState();
     _prepareAudio();
   }
@@ -76,6 +82,11 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   Future<void> _loadFavoriteState() async {
     final fav = await FavoritesService.instance.isFavorite(widget.dua.appId);
     if (mounted) setState(() => _isFavorite = fav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    await FavoritesService.instance.toggle(widget.dua.appId);
+    _loadFavoriteState();
   }
 
   Future<void> _prepareAudio() async {
@@ -91,7 +102,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
       });
       if (mounted) setState(() => _audioReady = true);
     } catch (_) {
-      // Audio file missing for this dua — bar stays disabled below.
+      // Audio file missing for this dua — play button stays disabled below.
       // Drop the matching mp3 into assets/audio/ using the filename
       // in dua.audio (see assets/data/duas.json) to enable it.
     }
@@ -124,8 +135,24 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     Share.share(buffer.toString());
   }
 
+  void _comingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature — coming soon')),
+    );
+  }
+
+  /// Which book section this dua belongs to, used both for the heading and
+  /// as the label of the first tab (matching the Figma dua screen, where
+  /// that tab is named after the current chapter rather than just "Dua").
+  String _chapterLabel(int appId) {
+    if (appId <= 15) return 'Istighfar';
+    if (appId <= 93) return 'Chapter 1';
+    return 'Chapter 2';
+  }
+
   @override
   void dispose() {
+    _tabController.dispose();
     _player.dispose();
     super.dispose();
   }
@@ -133,12 +160,12 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   @override
   Widget build(BuildContext context) {
     final d = widget.dua;
-    // The Istighfaar section (appId 1-15) is its own book chapter, so its
-    // heading reads "Istighfar N" rather than the generic "Dua N".
-    final heading = d.appId <= 15 ? 'Istighfar ${d.duaNo}' : 'Dua ${d.duaNo}';
+    final chapterLabel = _chapterLabel(d.appId);
+    final tabLabels = [chapterLabel, ..._tabLabels.skip(1)];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(heading),
+        title: const Text('Bayan-udh-Dua'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -146,66 +173,74 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
           ),
           IconButton(
             icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_outline),
-            onPressed: () async {
-              await FavoritesService.instance.toggle(d.appId);
-              _loadFavoriteState();
-            },
+            onPressed: _toggleFavorite,
           ),
         ],
       ),
       body: GradientBackground(
-        child: Scrollbar(
-          thumbVisibility: true,
-          child: ListView(
-          padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            if (d.title.isNotEmpty)
-              Text(d.title, style: Theme.of(context).textTheme.titleMedium),
-            if (d.situation.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  d.situation,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Row(
+                children: [
+                  Text(
+                    'Dua ${d.duaNo}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${d.appId} / ${widget.total}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: AnimatedBuilder(
+                animation: _tabController,
+                builder: (context, _) => ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    for (var i = 0; i < tabLabels.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(tabLabels[i]),
+                          selected: _tabController.index == i,
+                          onSelected: (_) => setState(() => _tabController.index = i),
+                        ),
                       ),
+                  ],
                 ),
               ),
-            const SizedBox(height: 20),
-            Text(
-              d.arabic,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              style: GoogleFonts.amiri(fontSize: 26, height: 1.9),
             ),
-            const SizedBox(height: 20),
-            if (d.transliteration.isNotEmpty) ...[
-              Text('Transliteration', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 6),
-              Text(d.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
-              const SizedBox(height: 16),
-            ],
-            if (d.translation.isNotEmpty) ...[
-              Text('Translation', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 6),
-              Text(d.translation),
-              const SizedBox(height: 16),
-            ],
-            if (d.tafsir.isNotEmpty) ...[
-              Text('Tafsir / Hadith', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 6),
-              Text(d.tafsir),
-              const SizedBox(height: 16),
-            ],
-            // Leaves room so the audio bar doesn't cover the last line of text.
-            const SizedBox(height: 90),
+            const SizedBox(height: 8),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                // The outer PageView already owns horizontal swipe (for
+                // moving between duas) — disabling swipe here avoids the
+                // two gestures fighting each other.
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _DuaTabContent(dua: d),
+                  _PlaceholderTab(label: tabLabels[1]),
+                  _PlaceholderTab(label: tabLabels[2]),
+                  _PlaceholderTab(label: tabLabels[3]),
+                  _PlaceholderTab(label: tabLabels[4]),
+                ],
+              ),
+            ),
           ],
-          ),
         ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          padding: const EdgeInsets.fromLTRB(8, 4, 20, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             boxShadow: [
@@ -216,87 +251,264 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
               ),
             ],
           ),
-          child: !_audioReady
-              ? const ListTile(
-                  leading: Icon(Icons.music_off),
-                  title: Text('Audio unavailable'),
-                )
-              : StreamBuilder<PlayerState>(
-                  stream: _player.playerStateStream,
-                  builder: (context, snapshot) {
-                    final playing = snapshot.data?.playing ?? false;
-                    return StreamBuilder<Duration>(
-                      stream: _player.positionStream,
-                      builder: (context, posSnapshot) {
-                        final position = posSnapshot.data ?? Duration.zero;
-                        final duration = _player.duration ?? Duration.zero;
-                        final maxMs = duration.inMilliseconds > 0
-                            ? duration.inMilliseconds.toDouble()
-                            : 1.0;
-                        final valueMs = position.inMilliseconds
-                            .clamp(0, maxMs.round())
-                            .toDouble();
-                        return Row(
-                          children: [
-                            IconButton(
-                              iconSize: 40,
-                              icon: Icon(
-                                playing
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_filled,
-                              ),
-                              onPressed: () => _togglePlay(playing),
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SliderTheme(
-                                    data: SliderTheme.of(context).copyWith(
-                                      trackHeight: 3,
-                                      thumbShape: const RoundSliderThumbShape(
-                                        enabledThumbRadius: 6,
-                                      ),
-                                    ),
-                                    child: Slider(
-                                      value: valueMs,
-                                      max: maxMs,
-                                      onChanged: (value) {
-                                        _player.seek(
-                                          Duration(milliseconds: value.round()),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          _formatDuration(position),
-                                          style:
-                                              Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                        Text(
-                                          _formatDuration(duration),
-                                          style:
-                                              Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_audioReady) _SeekBar(player: _player, formatDuration: _formatDuration),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _BottomBarAction(
+                    icon: Icons.share_outlined,
+                    label: 'Share',
+                    onTap: () => _shareDua(d),
+                  ),
+                  _BottomBarAction(
+                    icon: Icons.download_outlined,
+                    label: 'Download',
+                    onTap: () => _comingSoon('Download'),
+                  ),
+                  _PlayButton(
+                    audioReady: _audioReady,
+                    player: _player,
+                    onToggle: _togglePlay,
+                  ),
+                  _BottomBarAction(
+                    icon: Icons.notifications_outlined,
+                    label: 'Reminder',
+                    onTap: () => _comingSoon('Reminder'),
+                  ),
+                  _BottomBarAction(
+                    icon: _isFavorite ? Icons.favorite : Icons.favorite_outline,
+                    label: 'Favourite',
+                    onTap: _toggleFavorite,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The actual dua content — Arabic, transliteration, translation, tafsir —
+/// each in its own icon-labelled card, matching the Figma dua screen.
+class _DuaTabContent extends StatelessWidget {
+  final Dua dua;
+  const _DuaTabContent({required this.dua});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = dua;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      children: [
+        if (d.title.isNotEmpty)
+          Text(d.title, style: Theme.of(context).textTheme.titleMedium),
+        if (d.situation.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 16),
+            child: Text(
+              d.situation,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          )
+        else
+          const SizedBox(height: 12),
+        _SectionCard(
+          icon: Icons.menu_book_outlined,
+          label: 'Dua',
+          child: Text(
+            d.arabic,
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+            style: GoogleFonts.amiri(fontSize: 24, height: 1.9),
+          ),
+        ),
+        if (d.transliteration.isNotEmpty)
+          _SectionCard(
+            icon: Icons.translate_outlined,
+            label: 'Transliteration',
+            child: Text(d.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
+          ),
+        if (d.translation.isNotEmpty)
+          _SectionCard(
+            icon: Icons.language_outlined,
+            label: 'Translation',
+            child: Text(d.translation),
+          ),
+        if (d.tafsir.isNotEmpty)
+          _SectionCard(
+            icon: Icons.info_outline,
+            label: 'Tafseer',
+            child: Text(d.tafsir),
+          ),
+      ],
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget child;
+  const _SectionCard({required this.icon, required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: primary),
+              const SizedBox(width: 6),
+              Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: primary)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the tabs whose content (closing notes, introduction
+/// narrative, virtues of dua, types of dua) hasn't been written yet.
+class _PlaceholderTab extends StatelessWidget {
+  final String label;
+  const _PlaceholderTab({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Text(
+          '$label content coming soon.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SeekBar extends StatelessWidget {
+  final AudioPlayer player;
+  final String Function(Duration) formatDuration;
+  const _SeekBar({required this.player, required this.formatDuration});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<Duration>(
+      stream: player.positionStream,
+      builder: (context, snapshot) {
+        final position = snapshot.data ?? Duration.zero;
+        final duration = player.duration ?? Duration.zero;
+        final maxMs = duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0;
+        final valueMs = position.inMilliseconds.clamp(0, maxMs.round()).toDouble();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 2,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+              ),
+              child: Slider(
+                value: valueMs,
+                max: maxMs,
+                onChanged: (value) => player.seek(Duration(milliseconds: value.round())),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(formatDuration(position), style: Theme.of(context).textTheme.bodySmall),
+                  Text(formatDuration(duration), style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PlayButton extends StatelessWidget {
+  final bool audioReady;
+  final AudioPlayer player;
+  final void Function(bool playing) onToggle;
+  const _PlayButton({required this.audioReady, required this.player, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    if (!audioReady) {
+      return CircleAvatar(
+        radius: 26,
+        backgroundColor: primary.withValues(alpha: 0.3),
+        child: const Icon(Icons.music_off, color: Colors.white),
+      );
+    }
+    return StreamBuilder<PlayerState>(
+      stream: player.playerStateStream,
+      builder: (context, snapshot) {
+        final playing = snapshot.data?.playing ?? false;
+        return InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: () => onToggle(playing),
+          child: CircleAvatar(
+            radius: 26,
+            backgroundColor: primary,
+            child: Icon(playing ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 28),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BottomBarAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _BottomBarAction({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 22),
+            const SizedBox(height: 2),
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+          ],
         ),
       ),
     );
