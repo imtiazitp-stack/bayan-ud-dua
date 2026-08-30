@@ -66,38 +66,19 @@ class BrowseScreen extends StatelessWidget {
 class _NumberList extends StatelessWidget {
   const _NumberList();
 
-  static const _sicknessCalamityLabel =
-      'Duas read at times of sickness, calamities and other such occasions';
-  static const _sicknessCalamitySituations = {
-    'Dua for pain and illness',
-    'Dua for a person who becomes frail due to severe illness or difficulty',
-    'When afflicted with great calamity',
-    'Dua for times of grief and worry',
-    'Dua for removal of worry and grief and fulfilment of debt',
-  };
-
   List<Dua> _range(List<Dua> duas, int from, int to) =>
       duas.where((d) => d.appId >= from && d.appId <= to).toList();
 
   /// Groups duas by their `situation` tag, in first-appearance order — this
   /// is how the old app split "First Chapter"/"Second Chapter" into named
   /// sub-sections (Entering Home, After Eating, Istikhara, ...) instead of
-  /// one flat list. A handful of related situations can be folded into one
-  /// broader bucket via [mergeInto]/[mergedLabel] (used for the "sickness,
-  /// calamities" grouping). Duas whose situation is unique to them use
-  /// their own title as the label instead of the (often long) situation
-  /// text, since a one-off dua reads better under its own name.
-  Map<String, List<Dua>> _groupBySituation(
-    List<Dua> duas, {
-    Set<String>? mergeInto,
-    String? mergedLabel,
-  }) {
+  /// one flat list. Duas whose situation is unique to them use their own
+  /// title as the label instead of the (often long) situation text, since
+  /// a one-off dua reads better under its own name.
+  Map<String, List<Dua>> _groupBySituation(List<Dua> duas) {
     final groups = <String, List<Dua>>{};
     for (final d in duas) {
-      final merged = mergeInto != null && mergeInto.contains(d.situation);
-      final key = merged
-          ? mergedLabel!
-          : (d.situation.isNotEmpty ? d.situation : (d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}'));
+      final key = d.situation.isNotEmpty ? d.situation : (d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}');
       groups.putIfAbsent(key, () => []).add(d);
     }
     final result = <String, List<Dua>>{};
@@ -123,11 +104,7 @@ class _NumberList extends StatelessWidget {
         final otherDuas = _range(duas, 40, 93);
         final muwaqqat = _range(duas, 94, 140);
         final otherGroups = _groupBySituation(otherDuas);
-        final muwaqqatGroups = _groupBySituation(
-          muwaqqat,
-          mergeInto: _sicknessCalamitySituations,
-          mergedLabel: _sicknessCalamityLabel,
-        );
+        final muwaqqatGroups = _groupBySituation(muwaqqat);
 
         return ListView(
           children: [
@@ -144,6 +121,9 @@ class _NumberList extends StatelessWidget {
             ),
             ExpansionTile(
               title: const Text('Second Chapter — Muwaqqat (71–110)'),
+              subtitle: const Text(
+                'In this chapter, those duas are mentioned which are read at times of sickness, calamities and other such occasions',
+              ),
               children: [
                 for (final entry in muwaqqatGroups.entries)
                   _NumberCategory(title: entry.key, duas: entry.value, indent: true),
