@@ -74,7 +74,8 @@ class _NumberList extends StatelessWidget {
   /// sub-sections (Entering Home, After Eating, Istikhara, ...) instead of
   /// one flat list. Duas whose situation is unique to them use their own
   /// title as the label instead of the (often long) situation text, since
-  /// a one-off dua reads better under its own name.
+  /// a one-off dua reads better under its own name — prefixed with its
+  /// number (e.g. "22 - Jameih Dua"), matching the old app's numbering.
   Map<String, List<Dua>> _groupBySituation(List<Dua> duas) {
     final groups = <String, List<Dua>>{};
     for (final d in duas) {
@@ -84,7 +85,7 @@ class _NumberList extends StatelessWidget {
     final result = <String, List<Dua>>{};
     groups.forEach((key, list) {
       final useTitle = list.length == 1 && list.first.title.isNotEmpty && key == list.first.situation;
-      result[useTitle ? list.first.title : key] = list;
+      result[useTitle ? '${list.first.duaNo} - ${list.first.title}' : key] = list;
     });
     return result;
   }
@@ -99,6 +100,7 @@ class _NumberList extends StatelessWidget {
         }
         final duas = snapshot.data!;
         final istighfar = _range(duas, 1, 15);
+        final durood = duas.where((d) => d.appId == 141).toList();
         final morningEvening = _range(duas, 16, 28);
         final afterSalah = _range(duas, 29, 39);
         final otherDuas = _range(duas, 40, 93);
@@ -107,11 +109,27 @@ class _NumberList extends StatelessWidget {
         final muwaqqatGroups = _groupBySituation(muwaqqat);
 
         return ListView(
+          padding: const EdgeInsets.only(top: 8, bottom: 16),
           children: [
             _NumberCategory(title: 'Istighfar', duas: istighfar),
-            ExpansionTile(
-              title: const Text('First Chapter — Ghair Muwaqqat (1–70)'),
-              subtitle: const Text('Duas read daily and at all times'),
+            // Sits between Istighfar and the First Chapter's own numbered
+            // duas — it's read once before the chapter's duas begin, not
+            // filed under any of them.
+            if (durood.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: DuaCard(
+                  dua: durood.first,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => DuaDetailScreen(duas: durood, initialIndex: 0),
+                    ),
+                  ),
+                ),
+              ),
+            _SectionTile(
+              title: 'First Chapter — Ghair Muwaqqat (1–70)',
+              subtitle: 'Duas read daily and at all times',
               children: [
                 _NumberCategory(title: 'Morning & Evening Duas', duas: morningEvening, indent: true),
                 _NumberCategory(title: 'Dua after Salah', duas: afterSalah, indent: true),
@@ -119,11 +137,10 @@ class _NumberList extends StatelessWidget {
                   _NumberCategory(title: entry.key, duas: entry.value, indent: true),
               ],
             ),
-            ExpansionTile(
-              title: const Text('Second Chapter — Muwaqqat (71–110)'),
-              subtitle: const Text(
-                'In this chapter, those duas are mentioned which are read at times of sickness, calamities and other such occasions',
-              ),
+            _SectionTile(
+              title: 'Second Chapter — Muwaqqat (71–110)',
+              subtitle:
+                  'In this chapter, those duas are mentioned which are read at times of sickness, calamities and other such occasions',
               children: [
                 for (final entry in muwaqqatGroups.entries)
                   _NumberCategory(title: entry.key, duas: entry.value, indent: true),
@@ -132,6 +149,55 @@ class _NumberList extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// The rounded, icon-badged expandable row shared by every level of the
+/// "By Number" tab (top-level chapters and their nested sub-sections), so
+/// the whole index reads as one consistent list of pills instead of bare
+/// Material list tiles.
+class _SectionTile extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final bool indent;
+  final List<Widget> children;
+
+  const _SectionTile({
+    required this.title,
+    this.subtitle,
+    this.indent = false,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(indent ? 28 : 16, 0, 16, 10),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: ExpansionTile(
+            backgroundColor: cardColor,
+            collapsedBackgroundColor: cardColor,
+            shape: const RoundedRectangleBorder(),
+            collapsedShape: const RoundedRectangleBorder(),
+            leading: CircleAvatar(
+              radius: 16,
+              backgroundColor: primary.withValues(alpha: 0.15),
+              child: Icon(Icons.spa_outlined, size: 16, color: primary),
+            ),
+            title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: subtitle != null ? Text(subtitle!) : null,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            children: children,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -148,14 +214,14 @@ class _NumberCategory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      tilePadding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
-      title: Text(title),
-      subtitle: Text('${duas.length} duas'),
+    return _SectionTile(
+      title: title,
+      subtitle: '${duas.length} duas',
+      indent: indent,
       children: [
         for (var i = 0; i < duas.length; i++)
           Padding(
-            padding: EdgeInsets.fromLTRB(indent ? 32 : 16, 0, 16, 10),
+            padding: EdgeInsets.fromLTRB(indent ? 16 : 4, 0, 4, 10),
             child: DuaCard(
               dua: duas[i],
               onTap: () => Navigator.of(context).push(
