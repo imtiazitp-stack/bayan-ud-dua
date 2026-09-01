@@ -56,7 +56,9 @@ class _DuaCardState extends State<DuaCard> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    child: Text(d.duaNo, style: const TextStyle(fontSize: 12)),
+                    child: d.duaNo == 'Durood'
+                        ? const Icon(Icons.menu_book_outlined, size: 16)
+                        : Text(d.duaNo, style: const TextStyle(fontSize: 12)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
