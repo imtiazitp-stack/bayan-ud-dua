@@ -14,6 +14,8 @@ dependencies:
   shared_preferences: ^2.2.2   # favorites + last-read, stored on-device
   google_fonts: ^6.2.1         # for a proper Arabic-friendly font (e.g. Amiri/Lateef)
   share_plus: ^10.1.2          # native share sheet for sending a dua elsewhere
+  flutter_local_notifications: ^18.0.1  # daily reminder to recite a dua
+  timezone: ^0.9.4             # required by flutter_local_notifications for scheduling
 
 dev_dependencies:
   flutter_test:
