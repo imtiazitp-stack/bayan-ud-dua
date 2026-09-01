@@ -4,7 +4,6 @@ import 'package:share_plus/share_plus.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../widgets/dua_card.dart';
-import '../widgets/durood_intro_card.dart';
 import '../widgets/gradient_background.dart';
 import 'browse_screen.dart';
 import 'dua_detail_screen.dart';
@@ -16,6 +15,10 @@ import 'favorites_screen.dart';
 /// app icon so the two stay visually tied together.
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
+
+  // Hand-picked by the team rather than derived from any usage data (the
+  // app doesn't track that): Istighfar 10, and duas 42, 58, 69, 85, 89, 33.
+  static const _popularAppIds = [11, 63, 81, 92, 110, 114, 52];
 
   @override
   Widget build(BuildContext context) {
@@ -29,21 +32,20 @@ class HomeDashboardScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               final duas = snapshot.data!;
-              final popular = duas.take(5).toList();
+              final byAppId = {for (final d in duas) d.appId: d};
+              final popular = [
+                for (final id in _popularAppIds)
+                  if (byAppId[id] != null) byAppId[id]!,
+              ];
               final recommended = duas.length > 15
                   ? duas.sublist(10, 15)
                   : duas.skip(5).take(5).toList();
-              final durood = duas.where((d) => d.appId == 141).toList();
               return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   const _Greeting(),
                   const SizedBox(height: 20),
                   const _HeroBanner(),
-                  if (durood.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    DuroodIntroCard(dua: durood.first),
-                  ],
                   const SizedBox(height: 28),
                   Text('Popular duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
@@ -111,14 +113,28 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ),
-        IconButton(
-          icon: Icon(Icons.share_outlined, color: primary),
-          onPressed: _shareApp,
+        PopupMenuButton<void>(
+          icon: Icon(Icons.more_vert, color: primary),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              onTap: _shareApp,
+              child: const Row(
+                children: [
+                  Icon(Icons.share_outlined),
+                  SizedBox(width: 12),
+                  Text('Share app'),
+                ],
+              ),
+            ),
+          ],
         ),
-        IconButton(
-          icon: Icon(Icons.favorite_outline, color: primary),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+        Tooltip(
+          message: 'Favorites',
+          child: IconButton(
+            icon: Icon(Icons.favorite_outline, color: primary),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+            ),
           ),
         ),
       ],
@@ -129,17 +145,22 @@ class _Greeting extends StatelessWidget {
 class _HeroBanner extends StatelessWidget {
   const _HeroBanner();
 
+  // Exact gradient stops from the Figma banner component, not derived
+  // from the app's teal theme color — Figma uses a distinct teal-to-lime
+  // pairing here rather than a tint of the primary color.
+  static const _gradientStart = Color(0xFF39AAAD);
+  static const _gradientEnd = Color(0xFFBDD683);
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 12, 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+          colors: [_gradientStart, _gradientEnd],
         ),
       ),
       child: Row(
@@ -163,8 +184,8 @@ class _HeroBanner extends StatelessWidget {
                 const SizedBox(height: 14),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black.withValues(alpha: 0.75),
-                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.white,
+                    foregroundColor: _gradientStart,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   onPressed: () => Navigator.of(context).push(
