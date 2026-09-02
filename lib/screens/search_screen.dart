@@ -45,7 +45,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ),
               )
-            : DuaListScreen(preloaded: _results),
+            : DuaListView(preloaded: _results),
       ),
     );
   }
