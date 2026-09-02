@@ -20,32 +20,55 @@ class _SearchScreenState extends State<SearchScreen> {
     if (mounted) setState(() => _results = results);
   }
 
+  void _clear() {
+    _controller.clear();
+    _onChanged('');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: false,
-          decoration: const InputDecoration(
-            hintText: 'Search by dua number, situation or emotion',
-            border: InputBorder.none,
-          ),
-          onChanged: _onChanged,
-        ),
-      ),
+      appBar: AppBar(title: const Text('Search')),
       body: GradientBackground(
-        child: _controller.text.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'Try "travel", "forgiveness", "sleep", or "anxious"',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
-            : DuaListView(preloaded: _results),
+        child: Column(
+          children: [
+            // A plain borderless TextField sitting in the AppBar gave no
+            // visual cue it was tappable - this pill-shaped SearchBar
+            // reads unambiguously as "type here" (search icon, clear
+            // button, and its own elevated surface).
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: SearchBar(
+                controller: _controller,
+                autoFocus: true,
+                hintText: 'Search by dua number, situation or emotion',
+                leading: const Icon(Icons.search),
+                trailing: [
+                  if (_controller.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Clear',
+                      onPressed: _clear,
+                    ),
+                ],
+                onChanged: _onChanged,
+              ),
+            ),
+            Expanded(
+              child: _controller.text.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Try "travel", "forgiveness", "sleep", or "anxious"',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : DuaListView(preloaded: _results),
+            ),
+          ],
+        ),
       ),
     );
   }
