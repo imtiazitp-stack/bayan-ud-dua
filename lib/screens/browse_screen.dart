@@ -7,7 +7,7 @@ import 'dua_detail_screen.dart';
 import 'dua_list_screen.dart';
 
 /// Lets the person browse by "Situation" (e.g. Travel, Sleep, Illness),
-/// by "Emotion" (e.g. Guilt, Fear, Gratitude), or "By Number" — the
+/// by "Emotion" (e.g. Guilt, Fear, Gratitude), or "By Number" â€” the
 /// duas in the same order they're printed in the book. The first two
 /// taxonomies already exist in the team's spreadsheet, so this reuses
 /// them directly instead of inventing a new structure.
@@ -34,11 +34,11 @@ class BrowseScreen extends StatelessWidget {
             children: [
               const _NumberList(),
               _CategoryList(
-                loader: () => DuaRepository.instance.loadSituations(),
+                byEmotion: false,
                 onTap: (value) => _openList(context, situation: value),
               ),
               _CategoryList(
-                loader: () => DuaRepository.instance.loadEmotions(),
+                byEmotion: true,
                 onTap: (value) => _openList(context, emotion: value),
               ),
             ],
@@ -58,7 +58,7 @@ class BrowseScreen extends StatelessWidget {
 /// Shows every dua grouped the way the physical book is laid out.
 ///
 /// These appId boundaries are fixed by the book's structure (confirmed
-/// against the printed page numbers), not derived from `duaNo` — the
+/// against the printed page numbers), not derived from `duaNo` â€” the
 /// duaNo string restarts at "1" inside each section (Istighfar has its
 /// own "1".."14", then the numbered chapters restart at "1/1" again),
 /// so appId (which is a single continuously increasing sequence across
@@ -69,12 +69,12 @@ class _NumberList extends StatelessWidget {
   List<Dua> _range(List<Dua> duas, int from, int to) =>
       duas.where((d) => d.appId >= from && d.appId <= to).toList();
 
-  /// Groups duas by their `situation` tag, in first-appearance order — this
+  /// Groups duas by their `situation` tag, in first-appearance order â€” this
   /// is how the old app split "First Chapter"/"Second Chapter" into named
   /// sub-sections (Entering Home, After Eating, Istikhara, ...) instead of
   /// one flat list. Duas whose situation is unique to them use their own
   /// title as the label instead of the (often long) situation text, since
-  /// a one-off dua reads better under its own name — prefixed with its
+  /// a one-off dua reads better under its own name â€” prefixed with its
   /// number (e.g. "22 - Jameih Dua"), matching the old app's numbering.
   Map<String, List<Dua>> _groupBySituation(List<Dua> duas) {
     final groups = <String, List<Dua>>{};
@@ -113,7 +113,7 @@ class _NumberList extends StatelessWidget {
           children: [
             _NumberCategory(title: 'Istighfar', duas: istighfar),
             // Sits between Istighfar and the First Chapter's own numbered
-            // duas — it's read once before the chapter's duas begin, not
+            // duas â€” it's read once before the chapter's duas begin, not
             // filed under any of them.
             if (durood.isNotEmpty)
               Padding(
@@ -128,7 +128,7 @@ class _NumberList extends StatelessWidget {
                 ),
               ),
             _SectionTile(
-              title: 'First Chapter — Ghair Muwaqqat (1–70)',
+              title: 'First Chapter â€” Ghair Muwaqqat (1â€“70)',
               subtitle: 'Duas read daily and at all times',
               children: [
                 _NumberCategory(title: 'Morning & Evening Duas', duas: morningEvening, indent: true),
@@ -138,7 +138,7 @@ class _NumberList extends StatelessWidget {
               ],
             ),
             _SectionTile(
-              title: 'Second Chapter — Muwaqqat (71–110)',
+              title: 'Second Chapter â€” Muwaqqat (71â€“110)',
               subtitle:
                   'In this chapter, those duas are mentioned which are read at times of sickness, calamities and other such occasions',
               children: [
@@ -236,34 +236,113 @@ class _NumberCategory extends StatelessWidget {
   }
 }
 
+/// "By Situation" / "By Emotion" tabs, styled to match "By Number"'s
+/// rounded pill rows instead of a plain divided list â€” the whole
+/// Browse screen should read as one consistent index. Each row still
+/// navigates to a filtered [DuaListScreen] on tap rather than
+/// expanding in place, since (unlike the book-order groups) these
+/// categories aren't mutually exclusive â€” a dua can carry several
+/// emotion tags â€” so there's no single place to inline its duas.
 class _CategoryList extends StatelessWidget {
-  final Future<List<String>> Function() loader;
+  final bool byEmotion;
   final void Function(String value) onTap;
 
-  const _CategoryList({required this.loader, required this.onTap});
+  const _CategoryList({required this.byEmotion, required this.onTap});
+
+  Map<String, int> _counts(List<Dua> duas) {
+    final counts = <String, int>{};
+    for (final d in duas) {
+      if (byEmotion) {
+        for (final e in d.emotion) {
+          if (e.isNotEmpty) counts[e] = (counts[e] ?? 0) + 1;
+        }
+      } else if (d.situation.isNotEmpty) {
+        counts[d.situation] = (counts[d.situation] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<String>>(
-      future: loader(),
+    return FutureBuilder<List<Dua>>(
+      future: DuaRepository.instance.loadAll(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final items = snapshot.data!;
-        if (items.isEmpty) {
+        final counts = _counts(snapshot.data!);
+        if (counts.isEmpty) {
           return const Center(child: Text('Nothing here yet'));
         }
-        return ListView.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, i) => ListTile(
-            title: Text(items[i]),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => onTap(items[i]),
-          ),
+        final keys = counts.keys.toList()..sort();
+        return ListView(
+          padding: const EdgeInsets.only(top: 8, bottom: 16),
+          children: [
+            for (final key in keys)
+              _CategoryTile(
+                title: key,
+                count: counts[key]!,
+                icon: byEmotion ? Icons.favorite_border : Icons.spa_outlined,
+                onTap: () => onTap(key),
+              ),
+          ],
         );
       },
+    );
+  }
+}
+
+/// A non-expanding row sharing the same rounded pill look as
+/// [_SectionTile], for lists that navigate away on tap instead of
+/// revealing children inline.
+class _CategoryTile extends StatelessWidget {
+  final String title;
+  final int count;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CategoryTile({
+    required this.title,
+    required this.count,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Material(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: primary.withValues(alpha: 0.15),
+                  child: Icon(icon, size: 16, color: primary),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                Text('$count duas', style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
