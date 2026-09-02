@@ -1,5 +1,5 @@
 name: bayan_ud_dua
-description: "Bayan-udh-Dua — a collection of authentic duas, azkar and istighfar"
+description: "Bayan-udh-Dua - a collection of authentic duas, azkar and istighfar"
 publish_to: 'none'
 version: 1.0.0+2
 
@@ -16,6 +16,7 @@ dependencies:
   share_plus: ^10.1.2          # native share sheet for sending a dua elsewhere
   flutter_local_notifications: ^18.0.1  # daily reminder to recite a dua
   timezone: ^0.9.4             # required by flutter_local_notifications for scheduling
+  path_provider: ^2.1.1        # extract dua audio to our own temp file - see dua_detail_screen.dart
 
 dev_dependencies:
   flutter_test:
