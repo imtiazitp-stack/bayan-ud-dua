@@ -3,16 +3,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Lets someone set a daily reminder to recite a specific dua, backed by
-/// a real local notification (not just a UI toggle) so it fires even if
-/// the app isn't open. One reminder per dua, keyed by `Dua.appId` — both
-/// as the notification id and as the SharedPreferences key so the app can
-/// show whether a reminder is already set without querying the OS.
+/// Lets someone set one or more daily reminders to recite a specific dua,
+/// backed by real local notifications (not just a UI toggle) so they fire
+/// even if the app isn't open.
+///
+/// A dua's reminders are stored as a list of packed "HMM" times (e.g. 830
+/// for 8:30) under one SharedPreferences key per dua. Each notification's
+/// id is derived from `appId` and its own time, not from a per-dua slot
+/// index - `appId * 10000 + hour*100 + minute` is unique across every
+/// (dua, time) pair (packed time maxes out at 2359, well under 10000), so
+/// adding or removing one specific time never disturbs any other.
 class ReminderService {
   ReminderService._();
   static final ReminderService instance = ReminderService._();
 
-  static const _prefsPrefix = 'reminder_hour_minute_';
+  static const _prefsPrefix = 'reminder_times_';
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
@@ -33,24 +38,30 @@ class ReminderService {
     _initialized = true;
   }
 
-  /// The time-of-day a reminder is set for this dua, or null if none.
-  Future<TimeOfDayValue?> reminderFor(int appId) async {
+  int _packTime(int hour, int minute) => hour * 100 + minute;
+  int _notificationId(int appId, int packed) => appId * 10000 + packed;
+
+  /// Every reminder time currently set for this dua, earliest first.
+  Future<List<TimeOfDayValue>> remindersFor(int appId) async {
     final prefs = await SharedPreferences.getInstance();
-    final packed = prefs.getInt('$_prefsPrefix$appId');
-    if (packed == null) return null;
-    return TimeOfDayValue(packed ~/ 100, packed % 100);
+    final packed = (prefs.getStringList('$_prefsPrefix$appId') ?? [])
+        .map(int.parse)
+        .toList()
+      ..sort();
+    return packed.map((p) => TimeOfDayValue(p ~/ 100, p % 100)).toList();
   }
 
-  Future<void> setReminder({
+  Future<void> addReminder({
     required int appId,
     required String duaLabel,
     required int hour,
     required int minute,
   }) async {
     await init();
+    final packed = _packTime(hour, minute);
     final scheduled = _nextInstanceOf(hour, minute);
     await _plugin.zonedSchedule(
-      appId,
+      _notificationId(appId, packed),
       'Time for $duaLabel',
       'A gentle reminder to recite this dua.',
       scheduled,
@@ -69,14 +80,26 @@ class ReminderService {
       matchDateTimeComponents: DateTimeComponents.time,
     );
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('$_prefsPrefix$appId', hour * 100 + minute);
+    final key = '$_prefsPrefix$appId';
+    final current = prefs.getStringList(key) ?? [];
+    if (!current.contains('$packed')) {
+      await prefs.setStringList(key, [...current, '$packed']);
+    }
   }
 
-  Future<void> cancelReminder(int appId) async {
+  Future<void> removeReminder({
+    required int appId,
+    required int hour,
+    required int minute,
+  }) async {
     await init();
-    await _plugin.cancel(appId);
+    final packed = _packTime(hour, minute);
+    await _plugin.cancel(_notificationId(appId, packed));
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('$_prefsPrefix$appId');
+    final key = '$_prefsPrefix$appId';
+    final current = prefs.getStringList(key) ?? [];
+    current.remove('$packed');
+    await prefs.setStringList(key, current);
   }
 
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
@@ -89,7 +112,7 @@ class ReminderService {
   }
 }
 
-/// A plain hour/minute pair — avoids depending on Flutter's material
+/// A plain hour/minute pair - avoids depending on Flutter's material
 /// TimeOfDay from a services file that shouldn't need the UI toolkit.
 class TimeOfDayValue {
   final int hour;
