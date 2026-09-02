@@ -91,7 +91,7 @@ class _Greeting extends StatelessWidget {
 
   void _shareApp() {
     Share.share(
-      'Check out Bayan-udh-Dua â€” a collection of authentic duas, azkar and istighfar for daily recitation.',
+      'Check out Bayan-udh-Dua - a collection of authentic duas, azkar and istighfar for daily recitation.',
     );
   }
 
@@ -103,11 +103,25 @@ class _Greeting extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            'Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ°Ù†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…Ù',
+            // The Bismillah, written as \u escapes rather than literal
+            // Arabic - the GitHub web editor's paste path has repeatedly
+            // mangled non-ASCII bytes pushed through this pipeline (see
+            // also the plain-ASCII "|" fix in browse_screen.dart), and a
+            // line-count check doesn't catch that kind of corruption.
+            // Escapes are pure ASCII, so they survive the same paste
+            // round-trip unchanged.
+            String.fromCharCodes(const [
+              0x0628, 0x0650, 0x0633, 0x0652, 0x0645, 0x0650, 0x0020,
+              0x0627, 0x0644, 0x0644, 0x064e, 0x0651, 0x0647, 0x0650, 0x0020,
+              0x0627, 0x0644, 0x0631, 0x064e, 0x0651, 0x062d, 0x0652, 0x0645,
+              0x064e, 0x0670, 0x0646, 0x0650, 0x0020,
+              0x0627, 0x0644, 0x0631, 0x064e, 0x0651, 0x062d, 0x0650, 0x064a,
+              0x0645, 0x0650,
+            ]),
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
             // Matches Figma's "Body/Arabic dua" style (Outfit + automatic
-            // glyph fallback) â€” see dua_card.dart for why Outfit is
+            // glyph fallback) - see dua_card.dart for why Outfit is
             // correct here despite being a Latin font.
             style: GoogleFonts.outfit(
               fontSize: 20,
@@ -149,7 +163,7 @@ class _HeroBanner extends StatelessWidget {
   const _HeroBanner();
 
   // Exact gradient stops from the Figma banner component, not derived
-  // from the app's teal theme color â€” Figma uses a distinct teal-to-lime
+  // from the app's teal theme color - Figma uses a distinct teal-to-lime
   // pairing here rather than a tint of the primary color.
   static const _gradientStart = Color(0xFF39AAAD);
   static const _gradientEnd = Color(0xFFBDD683);
