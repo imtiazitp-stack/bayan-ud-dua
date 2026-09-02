@@ -128,7 +128,7 @@ class _NumberList extends StatelessWidget {
                 ),
               ),
             _SectionTile(
-              title: 'First Chapter â€” Ghair Muwaqqat (1â€“70)',
+              title: 'First Chapter - Ghair Muwaqqat (1-70)',
               subtitle: 'Duas read daily and at all times',
               children: [
                 _NumberCategory(title: 'Morning & Evening Duas', duas: morningEvening, indent: true),
@@ -138,7 +138,7 @@ class _NumberList extends StatelessWidget {
               ],
             ),
             _SectionTile(
-              title: 'Second Chapter â€” Muwaqqat (71â€“110)',
+              title: 'Second Chapter - Muwaqqat (71-110)',
               subtitle:
                   'In this chapter, those duas are mentioned which are read at times of sickness, calamities and other such occasions',
               children: [
@@ -157,7 +157,17 @@ class _NumberList extends StatelessWidget {
 /// "By Number" tab (top-level chapters and their nested sub-sections), so
 /// the whole index reads as one consistent list of pills instead of bare
 /// Material list tiles.
-class _SectionTile extends StatelessWidget {
+///
+/// Only the header row is an opaque pill â€” the expanded body sits directly
+/// on the screen's real gradient background instead of on another
+/// translucent card. [ExpansionTile]'s `backgroundColor` tints the whole
+/// tile including its children, so a nested [_SectionTile] inside another
+/// one was getting double- (or triple-) diluted white layered on top of
+/// white, washing the gradient out to a pale, inconsistent green in the
+/// gaps between nested sections. Rendering the body as a transparent
+/// [Column] instead keeps that gap the same true green at every nesting
+/// depth, matching the flat "By Situation"/"By Emotion" lists.
+class _SectionTile extends StatefulWidget {
   final String title;
   final String? subtitle;
   final bool indent;
@@ -171,32 +181,67 @@ class _SectionTile extends StatelessWidget {
   });
 
   @override
+  State<_SectionTile> createState() => _SectionTileState();
+}
+
+class _SectionTileState extends State<_SectionTile> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85);
     return Padding(
-      padding: EdgeInsets.fromLTRB(indent ? 28 : 16, 0, 16, 10),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: ExpansionTile(
-            backgroundColor: cardColor,
-            collapsedBackgroundColor: cardColor,
-            shape: const RoundedRectangleBorder(),
-            collapsedShape: const RoundedRectangleBorder(),
-            leading: CircleAvatar(
-              radius: 16,
-              backgroundColor: primary.withValues(alpha: 0.15),
-              child: Icon(Icons.spa_outlined, size: 16, color: primary),
+      padding: EdgeInsets.fromLTRB(widget.indent ? 28 : 16, 0, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: primary.withValues(alpha: 0.15),
+                      child: Icon(Icons.spa_outlined, size: 16, color: primary),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          if (widget.subtitle != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(widget.subtitle!, style: Theme.of(context).textTheme.bodySmall),
+                            ),
+                        ],
+                      ),
+                    ),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.keyboard_arrow_down),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: subtitle != null ? Text(subtitle!) : null,
-            childrenPadding: const EdgeInsets.only(bottom: 8),
-            children: children,
           ),
-        ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(children: widget.children),
+            ),
+        ],
       ),
     );
   }
@@ -212,11 +257,23 @@ class _NumberCategory extends StatelessWidget {
 
   const _NumberCategory({required this.title, required this.duas, this.indent = false});
 
+  /// e.g. "11-21 Â· 11 duas" â€” the duaNo span plus the total, so a reader
+  /// scanning the collapsed index already knows which numbers live inside
+  /// before expanding it. Falls back to a single number when there's only
+  /// one dua (and count wouldn't add anything to a plain range).
+  String _rangeLabel() {
+    if (duas.isEmpty) return '0 duas';
+    final first = duas.first.duaNo;
+    final last = duas.last.duaNo;
+    final range = first == last ? first : '$first-$last';
+    return '$range Â· ${duas.length} ${duas.length == 1 ? 'dua' : 'duas'}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return _SectionTile(
       title: title,
-      subtitle: '${duas.length} duas',
+      subtitle: _rangeLabel(),
       indent: indent,
       children: [
         for (var i = 0; i < duas.length; i++)
