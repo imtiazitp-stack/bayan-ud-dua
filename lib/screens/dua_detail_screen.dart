@@ -143,10 +143,19 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
         }
       });
       if (mounted) setState(() => _audioReady = true);
-    } catch (_) {
-      // Audio file missing for this dua â€” play button stays disabled below.
+    } catch (e) {
+      // Audio file missing for this dua - play button stays disabled below.
       // Drop the matching mp3 into assets/audio/ using the filename
       // in dua.audio (see assets/data/duas.json) to enable it.
+      //
+      // TEMPORARY diagnostic: surface the actual exception so we can see
+      // why setAsset() is failing on-device instead of guessing blind.
+      // Remove this SnackBar once the real cause is found and fixed.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Audio error (${widget.dua.audio}): $e')),
+        );
+      }
     }
   }
 
@@ -173,7 +182,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     buffer.writeln(d.arabic);
     if (d.transliteration.isNotEmpty) buffer.writeln(d.transliteration);
     if (d.translation.isNotEmpty) buffer.writeln(d.translation);
-    buffer.write('\nâ€” shared from Bayan-udh-Dua');
+    buffer.write('\n- shared from Bayan-udh-Dua');
     Share.share(buffer.toString());
   }
 
@@ -222,7 +231,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
                   // Matches Figma's "Body/Arabic dua" style exactly (Outfit
-                  // 20/36) â€” see dua_card.dart for why Outfit is correct
+                  // 20/36) - see dua_card.dart for why Outfit is correct
                   // here despite being a Latin font.
                   style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
                 ),
@@ -267,8 +276,8 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // One inline mini-player row â€” play button, elapsed time,
-              // scrubber, total time, all on the same baseline â€” rather
+              // One inline mini-player row - play button, elapsed time,
+              // scrubber, total time, all on the same baseline - rather
               // than a button stacked next to a two-line seek bar, which
               // left the button's center fighting the slider's for
               // vertical alignment.
@@ -296,7 +305,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
               const SizedBox(height: 6),
               // Each action gets an equal-width slot (rather than
               // MainAxisAlignment.spaceEvenly on raw children) so the
-              // icons themselves land at evenly spaced points â€” spaceEvenly
+              // icons themselves land at evenly spaced points - spaceEvenly
               // divides free space around each child's full label width,
               // so "Reminder"/"Favourite" being wider than "Share" pulled
               // the icons off an even spacing.
@@ -393,7 +402,7 @@ class _SeekBar extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // No "00:00" at rest â€” the thumb's position already shows
+            // No "00:00" at rest - the thumb's position already shows
             // progress, and a static zero here just added clutter before
             // playback starts.
             Expanded(
