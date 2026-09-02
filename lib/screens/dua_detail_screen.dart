@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/dua.dart';
 import '../services/favorites_service.dart';
@@ -133,7 +137,16 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
 
   Future<void> _prepareAudio() async {
     try {
-      await _player.setAsset('assets/${widget.dua.audio}');
+      // just_audio's own setAsset() derives its on-disk cache path from the
+      // asset key itself (cache/just_audio_cache/assets/<key>). On a device
+      // that had an older build of this app, a stale cache entry can leave
+      // a plain *file* sitting where the new path needs a *folder*, and
+      // every dua then fails identically with a "Not a directory" error -
+      // that's the "audio missing" bug this replaced. Extracting the asset
+      // into our own flat, app-controlled temp file sidesteps that cache
+      // logic entirely, so it can't collide with anything from before.
+      final path = await _extractedAudioPath();
+      await _player.setFilePath(path);
       // just_audio leaves position at the end once playback completes, so a
       // second tap on play does nothing audible unless we rewind first.
       _player.processingStateStream.listen((state) {
@@ -143,20 +156,27 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
         }
       });
       if (mounted) setState(() => _audioReady = true);
-    } catch (e) {
+    } catch (_) {
       // Audio file missing for this dua - play button stays disabled below.
       // Drop the matching mp3 into assets/audio/ using the filename
       // in dua.audio (see assets/data/duas.json) to enable it.
-      //
-      // TEMPORARY diagnostic: surface the actual exception so we can see
-      // why setAsset() is failing on-device instead of guessing blind.
-      // Remove this SnackBar once the real cause is found and fixed.
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Audio error (${widget.dua.audio}): $e')),
-        );
-      }
     }
+  }
+
+  /// Copies this dua's audio asset to a plain file under the app's temp
+  /// directory (once per app-id, reused on later plays) and returns its
+  /// path, so [_player] can use `setFilePath` instead of `setAsset`.
+  Future<String> _extractedAudioPath() async {
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/dua_audio_${widget.dua.appId}.mp3');
+    if (!await file.exists()) {
+      final data = await rootBundle.load('assets/${widget.dua.audio}');
+      await file.writeAsBytes(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        flush: true,
+      );
+    }
+    return file.path;
   }
 
   Future<void> _togglePlay(bool playing) async {
