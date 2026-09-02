@@ -257,7 +257,7 @@ class _NumberCategory extends StatelessWidget {
 
   const _NumberCategory({required this.title, required this.duas, this.indent = false});
 
-  /// e.g. "11-21 Â· 11 duas" â€” the duaNo span plus the total, so a reader
+  /// e.g. "11-21 | 11 duas" â€” the duaNo span plus the total, so a reader
   /// scanning the collapsed index already knows which numbers live inside
   /// before expanding it. Falls back to a single number when there's only
   /// one dua (and count wouldn't add anything to a plain range).
@@ -266,7 +266,11 @@ class _NumberCategory extends StatelessWidget {
     final first = duas.first.duaNo;
     final last = duas.last.duaNo;
     final range = first == last ? first : '$first-$last';
-    return '$range Â· ${duas.length} ${duas.length == 1 ? 'dua' : 'duas'}';
+    // Plain ASCII separator only â€” a "Â·" here got mangled to "Ã‚Â·" by the
+    // GitHub paste pipeline the same way the em-dash in the chapter titles
+    // did (see note above _NumberList), and a line-count check doesn't
+    // catch that kind of single-character corruption.
+    return '$range | ${duas.length} ${duas.length == 1 ? 'dua' : 'duas'}';
   }
 
   @override
