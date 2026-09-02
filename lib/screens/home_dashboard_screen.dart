@@ -106,6 +106,9 @@ class _Greeting extends StatelessWidget {
             'Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ°Ù†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…Ù',
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
+            // Matches Figma's "Body/Arabic dua" style (Outfit + automatic
+            // glyph fallback) â€” see dua_card.dart for why Outfit is
+            // correct here despite being a Latin font.
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w600,
