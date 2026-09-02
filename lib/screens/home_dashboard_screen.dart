@@ -91,7 +91,7 @@ class _Greeting extends StatelessWidget {
 
   void _shareApp() {
     Share.share(
-      'Check out Bayan-udh-Dua — a collection of authentic duas, azkar and istighfar for daily recitation.',
+      'Check out Bayan-udh-Dua â€” a collection of authentic duas, azkar and istighfar for daily recitation.',
     );
   }
 
@@ -103,10 +103,10 @@ class _Greeting extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+            'Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ°Ù†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…Ù',
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
-            style: GoogleFonts.amiri(
+            style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).textTheme.titleMedium?.color,
@@ -146,7 +146,7 @@ class _HeroBanner extends StatelessWidget {
   const _HeroBanner();
 
   // Exact gradient stops from the Figma banner component, not derived
-  // from the app's teal theme color — Figma uses a distinct teal-to-lime
+  // from the app's teal theme color â€” Figma uses a distinct teal-to-lime
   // pairing here rather than a tint of the primary color.
   static const _gradientStart = Color(0xFF39AAAD);
   static const _gradientEnd = Color(0xFFBDD683);
