@@ -17,7 +17,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   void initState() {
     super.initState();
     // This screen stays alive inside an IndexedStack, so it never
-    // naturally rebuilds on tab switch — listen so a heart tapped
+    // naturally rebuilds on tab switch - listen so a heart tapped
     // anywhere else in the app shows up here right away.
     FavoritesService.instance.addListener(_onFavoritesChanged);
   }
@@ -58,7 +58,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ),
               );
             }
-            return DuaListScreen(preloaded: snapshot.data!);
+            return DuaListView(preloaded: snapshot.data!);
           },
         ),
       ),
