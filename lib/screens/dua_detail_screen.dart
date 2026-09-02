@@ -144,7 +144,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
       });
       if (mounted) setState(() => _audioReady = true);
     } catch (_) {
-      // Audio file missing for this dua — play button stays disabled below.
+      // Audio file missing for this dua â€” play button stays disabled below.
       // Drop the matching mp3 into assets/audio/ using the filename
       // in dua.audio (see assets/data/duas.json) to enable it.
     }
@@ -173,7 +173,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     buffer.writeln(d.arabic);
     if (d.transliteration.isNotEmpty) buffer.writeln(d.transliteration);
     if (d.translation.isNotEmpty) buffer.writeln(d.translation);
-    buffer.write('\n— shared from Bayan-udh-Dua');
+    buffer.write('\nâ€” shared from Bayan-udh-Dua');
     Share.share(buffer.toString());
   }
 
@@ -193,16 +193,6 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(heading),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () => _shareDua(d),
-          ),
-          IconButton(
-            icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_outline),
-            onPressed: _toggleFavorite,
-          ),
-        ],
       ),
       body: GradientBackground(
         child: Scrollbar(
@@ -231,7 +221,10 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                   d.arabic,
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
-                  style: GoogleFonts.amiri(fontSize: 24, height: 1.9),
+                  // Matches Figma's "Body/Arabic dua" style exactly (Outfit
+                  // 20/36) â€” see dua_card.dart for why Outfit is correct
+                  // here despite being a Latin font.
+                  style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
                 ),
               ),
               if (d.transliteration.isNotEmpty)
@@ -274,29 +267,67 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_audioReady) _SeekBar(player: _player, formatDuration: _formatDuration),
+              // One inline mini-player row â€” play button, elapsed time,
+              // scrubber, total time, all on the same baseline â€” rather
+              // than a button stacked next to a two-line seek bar, which
+              // left the button's center fighting the slider's for
+              // vertical alignment.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  children: [
+                    _PlayButton(
+                      audioReady: _audioReady,
+                      player: _player,
+                      onToggle: _togglePlay,
+                    ),
+                    if (_audioReady) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _SeekBar(player: _player, formatDuration: _formatDuration),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // A little breathing room between the playback controls and
+              // the action row below, so the two read as separate groups
+              // instead of one dense block.
+              const SizedBox(height: 6),
+              // Each action gets an equal-width slot (rather than
+              // MainAxisAlignment.spaceEvenly on raw children) so the
+              // icons themselves land at evenly spaced points â€” spaceEvenly
+              // divides free space around each child's full label width,
+              // so "Reminder"/"Favourite" being wider than "Share" pulled
+              // the icons off an even spacing.
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _BottomBarAction(
-                    icon: Icons.share_outlined,
-                    label: 'Share',
-                    onTap: () => _shareDua(d),
+                  Expanded(
+                    child: Center(
+                      child: _BottomBarAction(
+                        icon: Icons.share_outlined,
+                        label: 'Share',
+                        onTap: () => _shareDua(d),
+                      ),
+                    ),
                   ),
-                  _PlayButton(
-                    audioReady: _audioReady,
-                    player: _player,
-                    onToggle: _togglePlay,
+                  Expanded(
+                    child: Center(
+                      child: _BottomBarAction(
+                        icon: _reminderTime != null ? Icons.notifications_active : Icons.notifications_outlined,
+                        label: _reminderTime != null ? _reminderTime!.format() : 'Reminder',
+                        onTap: _onReminderTap,
+                      ),
+                    ),
                   ),
-                  _BottomBarAction(
-                    icon: _reminderTime != null ? Icons.notifications_active : Icons.notifications_outlined,
-                    label: _reminderTime != null ? _reminderTime!.format() : 'Reminder',
-                    onTap: _onReminderTap,
-                  ),
-                  _BottomBarAction(
-                    icon: _isFavorite ? Icons.favorite : Icons.favorite_outline,
-                    label: 'Favourite',
-                    onTap: _toggleFavorite,
+                  Expanded(
+                    child: Center(
+                      child: _BottomBarAction(
+                        icon: _isFavorite ? Icons.favorite : Icons.favorite_outline,
+                        label: 'Favourite',
+                        onTap: _toggleFavorite,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -357,30 +388,31 @@ class _SeekBar extends StatelessWidget {
         final duration = player.duration ?? Duration.zero;
         final maxMs = duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0;
         final valueMs = position.inMilliseconds.clamp(0, maxMs.round()).toDouble();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
+        final timeStyle = Theme.of(context).textTheme.bodySmall;
+        final primary = Theme.of(context).colorScheme.primary;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 2,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-              ),
-              child: Slider(
-                value: valueMs,
-                max: maxMs,
-                onChanged: (value) => player.seek(Duration(milliseconds: value.round())),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(formatDuration(position), style: Theme.of(context).textTheme.bodySmall),
-                  Text(formatDuration(duration), style: Theme.of(context).textTheme.bodySmall),
-                ],
+            // No "00:00" at rest â€” the thumb's position already shows
+            // progress, and a static zero here just added clutter before
+            // playback starts.
+            Expanded(
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 1.5,
+                  activeTrackColor: primary,
+                  inactiveTrackColor: primary.withValues(alpha: 0.2),
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4),
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                ),
+                child: Slider(
+                  value: valueMs,
+                  max: maxMs,
+                  onChanged: (value) => player.seek(Duration(milliseconds: value.round())),
+                ),
               ),
             ),
+            Text(formatDuration(duration), style: timeStyle),
           ],
         );
       },
@@ -430,18 +462,21 @@ class _BottomBarAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 22),
-            const SizedBox(height: 2),
-            Text(label, style: Theme.of(context).textTheme.labelSmall),
-          ],
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22),
+              const SizedBox(height: 2),
+              Text(label, style: Theme.of(context).textTheme.labelSmall),
+            ],
+          ),
         ),
       ),
     );
