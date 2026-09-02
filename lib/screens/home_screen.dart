@@ -6,7 +6,7 @@ import 'favorites_screen.dart';
 
 /// Root screen: four tabs mirroring how the team already organizes
 /// content (a Home dashboard, Browse by situation/emotion/number,
-/// Search, Favorites). This is deliberately shallow — the book's own
+/// Search, Favorites). This is deliberately shallow - the book's own
 /// chapter structure (from the Content sheet) drives the "Browse" tab.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,10 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: 'Browse'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-          NavigationDestination(icon: Icon(Icons.favorite_outline), label: 'Favorites'),
+          // tooltip: '' suppresses NavigationDestination's default
+          // long-press tooltip (which just repeats the visible label) -
+          // the tooltip that was actually asked for is on the Favorites
+          // heart at the top of the Home screen, not down here.
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home', tooltip: ''),
+          NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: 'Browse', tooltip: ''),
+          NavigationDestination(icon: Icon(Icons.search), label: 'Search', tooltip: ''),
+          NavigationDestination(icon: Icon(Icons.favorite_outline), label: 'Favorites', tooltip: ''),
         ],
       ),
     );
