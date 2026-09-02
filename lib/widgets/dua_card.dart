@@ -4,7 +4,7 @@ import '../models/dua.dart';
 import '../services/favorites_service.dart';
 
 /// The rounded, translucent dua card from the Figma "Home & search"
-/// screen — reused everywhere a dua shows up in a list (Home's Popular/
+/// screen â€” reused everywhere a dua shows up in a list (Home's Popular/
 /// Recommended sections, By Number, By Situation, By Emotion, Search,
 /// Favorites) so the whole app reads as one consistent design instead of
 /// Home looking different from everything else.
@@ -83,7 +83,12 @@ class _DuaCardState extends State<DuaCard> {
                     textDirection: TextDirection.rtl,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.amiri(fontSize: 18),
+                    // Figma's "Body/Arabic dua" text style: Outfit 20/36 â€”
+                    // Outfit has no Arabic glyphs, so Figma (and Flutter)
+                    // both fall back to the platform's default Arabic font
+                    // automatically. No separate calligraphic font was
+                    // actually specified by the design.
+                    style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
                   ),
                 ),
               Text(
