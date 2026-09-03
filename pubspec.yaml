@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter               # locale/RTL support for the language picker
   cupertino_icons: ^1.0.6
   just_audio: ^0.9.36          # audio playback (works well on iOS + Android)
   shared_preferences: ^2.2.2   # favorites + last-read, stored on-device
