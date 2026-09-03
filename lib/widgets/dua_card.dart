@@ -4,7 +4,7 @@ import '../models/dua.dart';
 import '../services/favorites_service.dart';
 
 /// The rounded, translucent dua card from the Figma "Home & search"
-/// screen â€” reused everywhere a dua shows up in a list (Home's Popular/
+/// screen — reused everywhere a dua shows up in a list (Home's Popular/
 /// Recommended sections, By Number, By Situation, By Emotion, Search,
 /// Favorites) so the whole app reads as one consistent design instead of
 /// Home looking different from everything else.
@@ -38,8 +38,12 @@ class _DuaCardState extends State<DuaCard> {
   @override
   Widget build(BuildContext context) {
     final d = widget.dua;
-    final tags = d.emotion.take(2).toList();
-    final overflow = d.emotion.length - tags.length;
+    final lang = Localizations.localeOf(context).languageCode;
+    final title = d.localizedTitle(lang);
+    final translation = d.localizedTranslation(lang);
+    final emotion = d.localizedEmotion(lang);
+    final tags = emotion.take(2).toList();
+    final overflow = emotion.length - tags.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: isDark ? Theme.of(context).colorScheme.surfaceContainer : Colors.white.withValues(alpha: 0.85),
@@ -63,7 +67,7 @@ class _DuaCardState extends State<DuaCard> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}',
+                      title.isNotEmpty ? title : 'Dua ${d.duaNo}',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -83,7 +87,7 @@ class _DuaCardState extends State<DuaCard> {
                     textDirection: TextDirection.rtl,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    // Figma's "Body/Arabic dua" text style: Outfit 20/36 â€”
+                    // Figma's "Body/Arabic dua" text style: Outfit 20/36 —
                     // Outfit has no Arabic glyphs, so Figma (and Flutter)
                     // both fall back to the platform's default Arabic font
                     // automatically. No separate calligraphic font was
@@ -92,7 +96,7 @@ class _DuaCardState extends State<DuaCard> {
                   ),
                 ),
               Text(
-                d.translation,
+                translation,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall,
