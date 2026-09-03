@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/locale_service.dart';
 
 void main() {
   runApp(const BayanUdhDuaApp());
 }
 
-class BayanUdhDuaApp extends StatelessWidget {
+class BayanUdhDuaApp extends StatefulWidget {
   const BayanUdhDuaApp({super.key});
+
+  @override
+  State<BayanUdhDuaApp> createState() => _BayanUdhDuaAppState();
+}
+
+class _BayanUdhDuaAppState extends State<BayanUdhDuaApp> {
+  @override
+  void initState() {
+    super.initState();
+    LocaleService.instance.addListener(_onLocaleChanged);
+    LocaleService.instance.load();
+  }
+
+  @override
+  void dispose() {
+    LocaleService.instance.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +59,13 @@ class BayanUdhDuaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bayan-udh-Dua',
       debugShowCheckedModeBanner: false,
+      locale: LocaleService.instance.locale,
+      supportedLocales: const [Locale('en'), Locale('te')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       // Every screen so far has been designed against the light Figma
       // palette only — always use it, regardless of the device's system
       // dark/light setting, so the app doesn't fall back to an unstyled
