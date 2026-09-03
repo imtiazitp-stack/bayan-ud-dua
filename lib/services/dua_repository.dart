@@ -55,10 +55,10 @@ class DuaRepository {
     return all.where((d) => d.emotion.contains(emotion)).toList();
   }
 
-  Future<List<Dua>> search(String query) async {
+  Future<List<Dua>> search(String query, {String lang = 'en'}) async {
     final all = await loadAll();
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return [];
-    return all.where((d) => d.searchBlob.contains(q)).toList();
+    return all.where((d) => d.searchBlob(lang).contains(q)).toList();
   }
 }
