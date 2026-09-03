@@ -72,7 +72,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   final _player = AudioPlayer();
   bool _isFavorite = false;
   bool _audioReady = false;
-  TimeOfDayValue? _reminderTime;
+  List<TimeOfDayValue> _reminderTimes = [];
 
   @override
   void initState() {
@@ -93,46 +93,21 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   }
 
   Future<void> _loadReminderState() async {
-    final t = await ReminderService.instance.reminderFor(widget.dua.appId);
-    if (mounted) setState(() => _reminderTime = t);
+    final list = await ReminderService.instance.remindersFor(widget.dua.appId);
+    if (mounted) setState(() => _reminderTimes = list);
   }
 
+  // Opens a sheet listing every reminder time set for this dua (each with
+  // its own remove button) plus a button to add another - replaces the
+  // old single Keep/Remove dialog, which only ever supported one time per
+  // dua and (per feedback) made removing that one time unreliable.
   Future<void> _onReminderTap() async {
-    if (_reminderTime != null) {
-      final remove = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Reminder'),
-          content: Text('You have a daily reminder set for ${_reminderTime!.format()}.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Remove reminder')),
-          ],
-        ),
-      );
-      if (remove == true) {
-        await ReminderService.instance.cancelReminder(widget.dua.appId);
-        await _loadReminderState();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reminder removed')));
-        }
-      }
-      return;
-    }
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-    if (time == null || !mounted) return;
-    await ReminderService.instance.setReminder(
-      appId: widget.dua.appId,
-      duaLabel: 'Dua ${widget.dua.duaNo}',
-      hour: time.hour,
-      minute: time.minute,
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _ReminderSheet(dua: widget.dua),
     );
     await _loadReminderState();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Daily reminder set for ${time.format(context)}')),
-      );
-    }
   }
 
   Future<void> _prepareAudio() async {
@@ -343,8 +318,12 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                   Expanded(
                     child: Center(
                       child: _BottomBarAction(
-                        icon: _reminderTime != null ? Icons.notifications_active : Icons.notifications_outlined,
-                        label: _reminderTime != null ? _reminderTime!.format() : 'Reminder',
+                        icon: _reminderTimes.isNotEmpty ? Icons.notifications_active : Icons.notifications_outlined,
+                        label: _reminderTimes.isEmpty
+                            ? 'Reminder'
+                            : _reminderTimes.length == 1
+                                ? _reminderTimes.first.format()
+                                : '${_reminderTimes.length} reminders',
                         onTap: _onReminderTap,
                       ),
                     ),
@@ -506,6 +485,104 @@ class _BottomBarAction extends StatelessWidget {
               Text(label, style: Theme.of(context).textTheme.labelSmall),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Lists every reminder time set for one dua, each independently
+/// removable, plus a button to add another - a dua can have as many
+/// reminder times as wanted, same as any other dua in the book can.
+class _ReminderSheet extends StatefulWidget {
+  final Dua dua;
+  const _ReminderSheet({required this.dua});
+
+  @override
+  State<_ReminderSheet> createState() => _ReminderSheetState();
+}
+
+class _ReminderSheetState extends State<_ReminderSheet> {
+  List<TimeOfDayValue> _times = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final list = await ReminderService.instance.remindersFor(widget.dua.appId);
+    if (mounted) setState(() { _times = list; _loading = false; });
+  }
+
+  Future<void> _addTime() async {
+    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+    if (time == null || !mounted) return;
+    await ReminderService.instance.addReminder(
+      appId: widget.dua.appId,
+      duaLabel: 'Dua ${widget.dua.duaNo}',
+      hour: time.hour,
+      minute: time.minute,
+    );
+    await _load();
+  }
+
+  Future<void> _removeTime(TimeOfDayValue t) async {
+    await ReminderService.instance.removeReminder(
+      appId: widget.dua.appId,
+      hour: t.hour,
+      minute: t.minute,
+    );
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Reminders', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Set one or more times to be reminded to recite this dua every day.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_times.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('No reminders set yet.'),
+              )
+            else
+              for (final t in _times)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_active_outlined),
+                  title: Text(t.format()),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'Remove',
+                    onPressed: () => _removeTime(t),
+                  ),
+                ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _addTime,
+              icon: const Icon(Icons.add),
+              label: const Text('Add a reminder time'),
+            ),
+          ],
         ),
       ),
     );
