@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 import 'home_dashboard_screen.dart';
 import 'browse_screen.dart';
 import 'search_screen.dart';
@@ -32,15 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
           // tooltip: '' suppresses NavigationDestination's default
           // long-press tooltip (which just repeats the visible label) -
           // the tooltip that was actually asked for is on the Favorites
           // heart at the top of the Home screen, not down here.
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home', tooltip: ''),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: 'Browse', tooltip: ''),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Search', tooltip: ''),
-          NavigationDestination(icon: Icon(Icons.favorite_outline), label: 'Favorites', tooltip: ''),
+          NavigationDestination(icon: const Icon(Icons.home_outlined), label: AppStrings.of(context, 'nav_home'), tooltip: ''),
+          NavigationDestination(icon: const Icon(Icons.menu_book_outlined), label: AppStrings.of(context, 'nav_browse'), tooltip: ''),
+          NavigationDestination(icon: const Icon(Icons.search), label: AppStrings.of(context, 'nav_search'), tooltip: ''),
+          NavigationDestination(icon: const Icon(Icons.favorite_outline), label: AppStrings.of(context, 'nav_favorites'), tooltip: ''),
         ],
       ),
     );

@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_strings.dart';
 import 'home_screen.dart';
 
 class _OnboardingSlide {
   final String image;
-  final String title;
-  final String subtitle;
-  const _OnboardingSlide({required this.image, required this.title, required this.subtitle});
+  final String titleKey;
+  final String subtitleKey;
+  const _OnboardingSlide({required this.image, required this.titleKey, required this.subtitleKey});
 }
 
 const _slides = [
   _OnboardingSlide(
     image: 'assets/images/onboarding_over_100_duas.png',
-    title: 'Over 100 Duas',
-    subtitle: 'Recite from over 100 duas suited to your needs',
+    titleKey: 'onboard_1_title',
+    subtitleKey: 'onboard_1_subtitle',
   ),
   _OnboardingSlide(
     image: 'assets/images/onboarding_bookmarked_dua.png',
-    title: 'Bookmarked Dua',
-    subtitle: 'Access your bookmarked duas from your favourites list',
+    titleKey: 'onboard_2_title',
+    subtitleKey: 'onboard_2_subtitle',
   ),
   _OnboardingSlide(
     image: 'assets/images/onboarding_set_reminder.png',
-    title: 'Set Reminder',
-    subtitle: 'Set reminders to recite your specific dua',
+    titleKey: 'onboard_3_title',
+    subtitleKey: 'onboard_3_subtitle',
   ),
   _OnboardingSlide(
     image: 'assets/images/onboarding_download_dua.png',
-    title: 'Download Dua',
-    subtitle: 'Download dua to recite them at your convenience',
+    titleKey: 'onboard_4_title',
+    subtitleKey: 'onboard_4_subtitle',
   ),
 ];
 
@@ -90,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   opacity: isLast ? 0 : 1,
                   child: IgnorePointer(
                     ignoring: isLast,
-                    child: TextButton(onPressed: _finish, child: const Text('Skip')),
+                    child: TextButton(onPressed: _finish, child: Text(AppStrings.of(context, 'skip'))),
                   ),
                 ),
               ),
@@ -110,12 +111,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Image.asset(s.image, height: 220),
                         const SizedBox(height: 32),
                         Text(
-                          s.title,
+                          AppStrings.of(context, s.titleKey),
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          s.subtitle,
+                          AppStrings.of(context, s.subtitleKey),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
@@ -155,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                     ),
                     onPressed: _next,
-                    child: Text(isLast ? 'Finish' : 'Next'),
+                    child: Text(isLast ? AppStrings.of(context, 'finish') : AppStrings.of(context, 'next')),
                   ),
                 ],
               ),

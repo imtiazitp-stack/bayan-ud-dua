@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../services/favorites_service.dart';
@@ -39,7 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Favorites')),
+      appBar: AppBar(title: Text(AppStrings.of(context, 'favorites'))),
       body: GradientBackground(
         child: FutureBuilder<List<Dua>>(
           future: _loadFavorites(),
@@ -48,11 +49,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.data!.isEmpty) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Tap the heart on any dua to save it here for quick access.',
+                    AppStrings.of(context, 'favorites_empty'),
                     textAlign: TextAlign.center,
                   ),
                 ),

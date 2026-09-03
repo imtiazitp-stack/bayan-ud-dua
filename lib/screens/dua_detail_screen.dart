@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/favorites_service.dart';
 import '../services/reminder_service.dart';
@@ -171,13 +172,16 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     return '$minutes:$seconds';
   }
 
-  void _shareDua(Dua d) {
+  void _shareDua(BuildContext context, Dua d, String lang) {
     final buffer = StringBuffer();
-    if (d.title.isNotEmpty) buffer.writeln(d.title);
+    final title = d.localizedTitle(lang);
+    final transliteration = d.localizedTransliteration(lang);
+    final translation = d.localizedTranslation(lang);
+    if (title.isNotEmpty) buffer.writeln(title);
     buffer.writeln(d.arabic);
-    if (d.transliteration.isNotEmpty) buffer.writeln(d.transliteration);
-    if (d.translation.isNotEmpty) buffer.writeln(d.translation);
-    buffer.write('\n- shared from Bayan-udh-Dua');
+    if (transliteration.isNotEmpty) buffer.writeln(transliteration);
+    if (translation.isNotEmpty) buffer.writeln(translation);
+    buffer.write('\n${AppStrings.of(context, 'shared_from_app')}');
     Share.share(buffer.toString());
   }
 
@@ -190,8 +194,17 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   @override
   Widget build(BuildContext context) {
     final d = widget.dua;
+    final lang = Localizations.localeOf(context).languageCode;
+    final title = d.localizedTitle(lang);
+    final situation = d.localizedSituation(lang);
+    final transliteration = d.localizedTransliteration(lang);
+    final translation = d.localizedTranslation(lang);
+    final tafsir = d.localizedTafsir(lang);
     // The Istighfaar section (appId 1-15) is its own book chapter, so its
-    // heading reads "Istighfar N" rather than the generic "Dua N".
+    // heading reads "Istighfar N" rather than the generic "Dua N". Both
+    // "Istighfar" and "Dua" are kept as their common loanword form rather
+    // than routed through AppStrings - Islamic terms readers already know
+    // regardless of the app's display language.
     final heading = d.appId <= 15 ? 'Istighfar ${d.duaNo}' : 'Dua ${d.duaNo}';
 
     return Scaffold(
@@ -204,13 +217,13 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: [
-              if (d.title.isNotEmpty)
-                Text(d.title, style: Theme.of(context).textTheme.titleMedium),
-              if (d.situation.isNotEmpty)
+              if (title.isNotEmpty)
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+              if (situation.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 16),
                   child: Text(
-                    d.situation,
+                    situation,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -220,7 +233,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                 const SizedBox(height: 12),
               _SectionCard(
                 icon: Icons.menu_book_outlined,
-                label: 'Dua',
+                label: AppStrings.of(context, 'dua_section'),
                 child: Text(
                   d.arabic,
                   textAlign: TextAlign.right,
@@ -231,23 +244,23 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                   style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
                 ),
               ),
-              if (d.transliteration.isNotEmpty)
+              if (transliteration.isNotEmpty)
                 _SectionCard(
                   icon: Icons.translate_outlined,
-                  label: 'Transliteration',
-                  child: Text(d.transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
+                  label: AppStrings.of(context, 'transliteration'),
+                  child: Text(transliteration, style: const TextStyle(fontStyle: FontStyle.italic)),
                 ),
-              if (d.translation.isNotEmpty)
+              if (translation.isNotEmpty)
                 _SectionCard(
                   icon: Icons.language_outlined,
-                  label: 'Translation',
-                  child: Text(d.translation),
+                  label: AppStrings.of(context, 'translation'),
+                  child: Text(translation),
                 ),
-              if (d.tafsir.isNotEmpty)
+              if (tafsir.isNotEmpty)
                 _SectionCard(
                   icon: Icons.info_outline,
-                  label: 'Tafseer',
-                  child: Text(d.tafsir),
+                  label: AppStrings.of(context, 'tafseer'),
+                  child: Text(tafsir),
                 ),
               // Leaves room so the bottom bar doesn't cover the last line.
               const SizedBox(height: 90),
@@ -310,8 +323,8 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                     child: Center(
                       child: _BottomBarAction(
                         icon: Icons.share_outlined,
-                        label: 'Share',
-                        onTap: () => _shareDua(d),
+                        label: AppStrings.of(context, 'share'),
+                        onTap: () => _shareDua(context, d, lang),
                       ),
                     ),
                   ),
@@ -320,10 +333,10 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                       child: _BottomBarAction(
                         icon: _reminderTimes.isNotEmpty ? Icons.notifications_active : Icons.notifications_outlined,
                         label: _reminderTimes.isEmpty
-                            ? 'Reminder'
+                            ? AppStrings.of(context, 'reminder')
                             : _reminderTimes.length == 1
                                 ? _reminderTimes.first.format()
-                                : '${_reminderTimes.length} reminders',
+                                : AppStrings.remindersCount(context, _reminderTimes.length),
                         onTap: _onReminderTap,
                       ),
                     ),
@@ -332,7 +345,7 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                     child: Center(
                       child: _BottomBarAction(
                         icon: _isFavorite ? Icons.favorite : Icons.favorite_outline,
-                        label: 'Favourite',
+                        label: AppStrings.of(context, 'favourite'),
                         onTap: _toggleFavorite,
                       ),
                     ),
@@ -547,10 +560,10 @@ class _ReminderSheetState extends State<_ReminderSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Reminders', style: Theme.of(context).textTheme.titleLarge),
+            Text(AppStrings.of(context, 'reminders_title'), style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              'Set one or more times to be reminded to recite this dua every day.',
+              AppStrings.of(context, 'reminders_subtitle'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -560,9 +573,9 @@ class _ReminderSheetState extends State<_ReminderSheet> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (_times.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text('No reminders set yet.'),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(AppStrings.of(context, 'no_reminders_yet')),
               )
             else
               for (final t in _times)
@@ -572,7 +585,7 @@ class _ReminderSheetState extends State<_ReminderSheet> {
                   title: Text(t.format()),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    tooltip: 'Remove',
+                    tooltip: AppStrings.of(context, 'remove'),
                     onPressed: () => _removeTime(t),
                   ),
                 ),
@@ -580,7 +593,7 @@ class _ReminderSheetState extends State<_ReminderSheet> {
             OutlinedButton.icon(
               onPressed: _addTime,
               icon: const Icon(Icons.add),
-              label: const Text('Add a reminder time'),
+              label: Text(AppStrings.of(context, 'add_reminder_time')),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
+import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../widgets/dua_card.dart';
@@ -8,6 +9,7 @@ import '../widgets/gradient_background.dart';
 import 'browse_screen.dart';
 import 'dua_detail_screen.dart';
 import 'favorites_screen.dart';
+import 'language_screen.dart';
 
 /// Landing tab matching the Figma "Home & search" screen: a greeting,
 /// a hero banner leading into the book, then a couple of dua card
@@ -47,7 +49,7 @@ class HomeDashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   const _HeroBanner(),
                   const SizedBox(height: 28),
-                  Text('Popular duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(AppStrings.of(context, 'popular_duas'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   for (var i = 0; i < popular.length; i++)
                     Padding(
@@ -62,7 +64,7 @@ class HomeDashboardScreen extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 14),
-                  Text('Recommended duas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(AppStrings.of(context, 'recommended_duas'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   for (var i = 0; i < recommended.length; i++)
                     Padding(
@@ -89,10 +91,8 @@ class HomeDashboardScreen extends StatelessWidget {
 class _Greeting extends StatelessWidget {
   const _Greeting();
 
-  void _shareApp() {
-    Share.share(
-      'Check out Bayan-udh-Dua - a collection of authentic duas, azkar and istighfar for daily recitation.',
-    );
+  void _shareApp(BuildContext context) {
+    Share.share(AppStrings.of(context, 'share_app_text'));
   }
 
   @override
@@ -132,21 +132,33 @@ class _Greeting extends StatelessWidget {
         ),
         PopupMenuButton<void>(
           icon: Icon(Icons.more_vert, color: primary),
-          itemBuilder: (context) => [
+          itemBuilder: (menuContext) => [
             PopupMenuItem(
-              onTap: _shareApp,
-              child: const Row(
+              onTap: () => _shareApp(context),
+              child: Row(
                 children: [
-                  Icon(Icons.share_outlined),
-                  SizedBox(width: 12),
-                  Text('Share app'),
+                  const Icon(Icons.share_outlined),
+                  const SizedBox(width: 12),
+                  Text(AppStrings.of(menuContext, 'share_app')),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LanguageScreen()),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.language_outlined),
+                  const SizedBox(width: 12),
+                  Text(AppStrings.of(menuContext, 'language')),
                 ],
               ),
             ),
           ],
         ),
         Tooltip(
-          message: 'Favorites',
+          message: AppStrings.of(context, 'favorites'),
           child: IconButton(
             icon: Icon(Icons.favorite_outline, color: primary),
             onPressed: () => Navigator.of(context).push(
@@ -187,7 +199,7 @@ class _HeroBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Enhance Your\nSpiritual Journey',
+                  AppStrings.of(context, 'hero_title'),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -195,7 +207,7 @@ class _HeroBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Connect, Reflect, and Renew',
+                  AppStrings.of(context, 'hero_subtitle'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
                 ),
                 const SizedBox(height: 14),
@@ -208,7 +220,7 @@ class _HeroBanner extends StatelessWidget {
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const BrowseScreen()),
                   ),
-                  child: const Text('Open book'),
+                  child: Text(AppStrings.of(context, 'open_book')),
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../widgets/dua_card.dart';
@@ -39,7 +40,7 @@ class DuaListView extends StatelessWidget {
         }
         final duas = snapshot.data!;
         if (duas.isEmpty) {
-          return const Center(child: Text('No duas found'));
+          return Center(child: Text(AppStrings.of(context, 'no_duas_found')));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -78,11 +79,36 @@ class DuaListScreen extends StatelessWidget {
     this.preloaded,
   });
 
+  /// [situation]/[emotion] arrive as plain English keys (from By Situation/
+  /// By Emotion, which group/navigate by the English value - see
+  /// browse_screen.dart). The AppBar title, being pure display, instead
+  /// shows the localized text: it loads the same list DuaListView will
+  /// render and takes the label straight off its first dua, so the two
+  /// never disagree on what a translation looks like.
+  Future<String> _title(BuildContext context) async {
+    if (situation == null && emotion == null) return AppStrings.of(context, 'all_duas');
+    final lang = Localizations.localeOf(context).languageCode;
+    final duas = situation != null
+        ? await DuaRepository.instance.bysituation(situation!)
+        : await DuaRepository.instance.byEmotion(emotion!);
+    if (duas.isEmpty) return situation ?? emotion!;
+    final sample = duas.first;
+    if (situation != null) return sample.localizedSituation(lang);
+    final idx = sample.emotion.indexOf(emotion!);
+    if (idx < 0) return emotion!;
+    final translated = sample.localizedEmotion(lang);
+    return idx < translated.length ? translated[idx] : emotion!;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final title = situation ?? emotion ?? 'All Duas';
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: FutureBuilder<String>(
+          future: _title(context),
+          builder: (context, snapshot) => Text(snapshot.data ?? ''),
+        ),
+      ),
       body: GradientBackground(
         child: DuaListView(situation: situation, emotion: emotion, preloaded: preloaded),
       ),
