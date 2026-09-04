@@ -61,4 +61,35 @@ class DuaRepository {
     if (q.isEmpty) return [];
     return all.where((d) => d.searchBlob(lang).contains(q)).toList();
   }
+
+  /// The complete dua list in the order the printed book presents them:
+  /// Istighfar (1-15), then Durood (which sits between Istighfar and the
+  /// First Chapter's own numbered duas, matching browse_screen.dart's
+  /// _NumberList layout), then the First Chapter (16-93), then the
+  /// Second Chapter (94-140).
+  ///
+  /// This is the "universe" a dua's detail page swipes through - no
+  /// matter which filtered list (a situation, an emotion, a search,
+  /// favorites, a Home card) the reader tapped in from, swiping left/
+  /// right moves through the entire book front-to-back, per the app's
+  /// design: a reader should always be able to keep reading straight
+  /// through rather than being boxed into whatever subset they entered
+  /// from.
+  Future<List<Dua>> loadAllInBookOrder() async {
+    final all = await loadAll();
+    final byAppId = {for (final d in all) d.appId: d};
+    final order = <Dua>[];
+    void addRange(int from, int to) {
+      for (var id = from; id <= to; id++) {
+        final d = byAppId[id];
+        if (d != null) order.add(d);
+      }
+    }
+
+    addRange(1, 15);
+    final durood = byAppId[141];
+    if (durood != null) order.add(durood);
+    addRange(16, 140);
+    return order;
+  }
 }
