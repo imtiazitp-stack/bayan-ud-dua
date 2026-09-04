@@ -38,6 +38,7 @@ class _DuaCardState extends State<DuaCard> {
   @override
   Widget build(BuildContext context) {
     final d = widget.dua;
+    final isDurood = d.duaNo == 'Durood';
     final lang = Localizations.localeOf(context).languageCode;
     final title = d.localizedTitle(lang);
     final translation = d.localizedTranslation(lang);
@@ -78,29 +79,43 @@ class _DuaCardState extends State<DuaCard> {
                   ),
                 ],
               ),
-              if (d.arabic.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text(
-                    d.arabic,
-                    textAlign: TextAlign.right,
-                    textDirection: TextDirection.rtl,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    // Figma's "Body/Arabic dua" text style: Outfit 20/36 —
-                    // Outfit has no Arabic glyphs, so Figma (and Flutter)
-                    // both fall back to the platform's default Arabic font
-                    // automatically. No separate calligraphic font was
-                    // actually specified by the design.
-                    style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
+              // The Durood card sits in the index above the numbered duas
+              // as a one-off "read this before starting" entry, not a dua
+              // to search/browse by content - showing its long Arabic/
+              // translation preview there reads as clutter, so it gets a
+              // plain English caption instead (deliberately not routed
+              // through AppStrings/localizedTranslation - this label is
+              // about the card's role in the index, not the dua's content).
+              if (isDurood)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text('The best possible way to send Durood'),
+                )
+              else ...[
+                if (d.arabic.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      d.arabic,
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      // Figma's "Body/Arabic dua" text style: Outfit 20/36 —
+                      // Outfit has no Arabic glyphs, so Figma (and Flutter)
+                      // both fall back to the platform's default Arabic font
+                      // automatically. No separate calligraphic font was
+                      // actually specified by the design.
+                      style: GoogleFonts.outfit(fontSize: 20, height: 1.8),
+                    ),
                   ),
+                Text(
+                  translation,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              Text(
-                translation,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              ],
               if (tags.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Wrap(
