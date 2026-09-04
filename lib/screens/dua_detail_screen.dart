@@ -8,16 +8,19 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../l10n/app_strings.dart';
 import '../models/dua.dart';
+import '../services/dua_repository.dart';
 import '../services/favorites_service.dart';
 import '../services/reminder_service.dart';
 import '../widgets/gradient_background.dart';
 
-/// Shows a dua with swipe-to-browse: swiping left/right moves to the
-/// next/previous dua in whatever list the user came from (By Number,
-/// By Situation, By Emotion, Search, Favorites, or a Home card list),
-/// so people don't have to keep backing out to the list and tapping
-/// the next one. Vertical swipe isn't used for this since the dua's
-/// own text already scrolls vertically.
+/// Shows a dua with swipe-to-browse: swiping left/right always moves
+/// through the *entire* book, front to back (see
+/// DuaRepository.loadAllInBookOrder), regardless of which filtered list
+/// (a situation, an emotion, a search, favorites, or a Home card list)
+/// the reader tapped in from - use [DuaDetailScreen.open] to navigate
+/// here so that book-order list is built consistently everywhere.
+/// Vertical swipe isn't used for this since the dua's own text already
+/// scrolls vertically.
 class DuaDetailScreen extends StatefulWidget {
   final List<Dua> duas;
   final int initialIndex;
@@ -32,6 +35,18 @@ class DuaDetailScreen extends StatefulWidget {
   /// with nothing to swipe to.
   factory DuaDetailScreen.single(Dua dua, {Key? key}) =>
       DuaDetailScreen(key: key, duas: [dua], initialIndex: 0);
+
+  /// Opens [dua]'s detail page with the whole book as its swipe universe,
+  /// in book order, so swiping always reaches the true first and last
+  /// dua no matter where the reader tapped in from.
+  static Future<void> open(BuildContext context, Dua dua) async {
+    final bookOrder = await DuaRepository.instance.loadAllInBookOrder();
+    final index = bookOrder.indexWhere((d) => d.appId == dua.appId);
+    if (!context.mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => DuaDetailScreen(duas: bookOrder, initialIndex: index < 0 ? 0 : index),
+    ));
+  }
 
   @override
   State<DuaDetailScreen> createState() => _DuaDetailScreenState();

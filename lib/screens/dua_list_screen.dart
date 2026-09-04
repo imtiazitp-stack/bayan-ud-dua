@@ -50,11 +50,7 @@ class DuaListView extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 14),
               child: DuaCard(
                 dua: duas[i],
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
-                  ),
-                ),
+                onTap: () => DuaDetailScreen.open(context, duas[i]),
               ),
             );
           },

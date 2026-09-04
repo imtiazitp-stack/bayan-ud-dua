@@ -134,11 +134,7 @@ class _NumberList extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                 child: DuaCard(
                   dua: durood.first,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => DuaDetailScreen(duas: durood, initialIndex: 0),
-                    ),
-                  ),
+                  onTap: () => DuaDetailScreen.open(context, durood.first),
                 ),
               ),
             _SectionTile(
@@ -298,11 +294,7 @@ class _NumberCategory extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(indent ? 16 : 4, 0, 4, 10),
             child: DuaCard(
               dua: duas[i],
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DuaDetailScreen(duas: duas, initialIndex: i),
-                ),
-              ),
+              onTap: () => DuaDetailScreen.open(context, duas[i]),
             ),
           ),
       ],

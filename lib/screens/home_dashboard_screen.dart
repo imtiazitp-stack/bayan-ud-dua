@@ -56,11 +56,7 @@ class HomeDashboardScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 14),
                       child: DuaCard(
                         dua: popular[i],
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DuaDetailScreen(duas: popular, initialIndex: i),
-                          ),
-                        ),
+                        onTap: () => DuaDetailScreen.open(context, popular[i]),
                       ),
                     ),
                   const SizedBox(height: 14),
@@ -71,11 +67,7 @@ class HomeDashboardScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 14),
                       child: DuaCard(
                         dua: recommended[i],
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DuaDetailScreen(duas: recommended, initialIndex: i),
-                          ),
-                        ),
+                        onTap: () => DuaDetailScreen.open(context, recommended[i]),
                       ),
                     ),
                 ],
