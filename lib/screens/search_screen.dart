@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/gradient_background.dart';
 import 'dua_list_screen.dart';
 
@@ -72,6 +73,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNav(),
     );
   }
 }

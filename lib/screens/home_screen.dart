@@ -10,19 +10,24 @@ import 'favorites_screen.dart';
 /// Search, Favorites). This is deliberately shallow - the book's own
 /// chapter structure (from the Content sheet) drives the "Browse" tab.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _index = 0;
+  late int _index = widget.initialIndex;
 
+  // Index 2 (Search) is never actually shown here - see
+  // onDestinationSelected below, which pushes SearchScreen as its own
+  // route instead of swapping to it as a tab.
   static const _screens = [
     HomeDashboardScreen(),
     BrowseScreen(),
-    SearchScreen(),
+    SizedBox.shrink(),
     FavoritesScreen(),
   ];
 
@@ -32,7 +37,18 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          // Search is a look-something-up-then-continue action, not a
+          // persistent tab like the other three - pushing it (rather than
+          // swapping the IndexedStack) means the back button returns
+          // exactly to whichever tab was open before, instead of losing
+          // that place the way switching tabs would.
+          if (i == 2) {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
+            return;
+          }
+          setState(() => _index = i);
+        },
         destinations: [
           // tooltip: '' suppresses NavigationDestination's default
           // long-press tooltip (which just repeats the visible label) -

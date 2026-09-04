@@ -11,6 +11,7 @@ import '../models/dua.dart';
 import '../services/dua_repository.dart';
 import '../services/favorites_service.dart';
 import '../services/reminder_service.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/gradient_background.dart';
 
 /// Shows a dua with swipe-to-browse: swiping left/right always moves
@@ -89,6 +90,8 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
   bool _isFavorite = false;
   bool _audioReady = false;
   List<TimeOfDayValue> _reminderTimes = [];
+  String _sectionLabel = '';
+  String? _sectionLabelLang;
 
   @override
   void initState() {
@@ -96,6 +99,25 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
     _loadFavoriteState();
     _loadReminderState();
     _prepareAudio();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The section label ("Istighfar", "Morning & Evening Duas", a
+    // situation group's name, ...) depends on the active language, which
+    // isn't known until dependencies (Localizations) are available - and
+    // needs reloading if the language changes while this page is open.
+    final lang = Localizations.localeOf(context).languageCode;
+    if (lang != _sectionLabelLang) {
+      _sectionLabelLang = lang;
+      _loadSectionLabel(lang);
+    }
+  }
+
+  Future<void> _loadSectionLabel(String lang) async {
+    final label = await DuaRepository.instance.sectionLabelFor(widget.dua.appId, lang);
+    if (mounted) setState(() => _sectionLabel = label);
   }
 
   Future<void> _loadFavoriteState() async {
@@ -224,7 +246,46 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(heading),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(heading),
+            if (_sectionLabel.isNotEmpty)
+              Text(
+                _sectionLabel,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).appBarTheme.foregroundColor?.withValues(alpha: 0.7) ??
+                          Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+          ],
+        ),
+        // Share/Reminder/Favourite moved up here from a bottom action row -
+        // now that every page also carries the persistent Home/Browse/
+        // Search/Favorites bar at the bottom, the bottom area is reserved
+        // for just the audio player so the two rows don't compete for the
+        // same real estate.
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: AppStrings.of(context, 'share'),
+            onPressed: () => _shareDua(context, d, lang),
+          ),
+          IconButton(
+            icon: Icon(_reminderTimes.isNotEmpty ? Icons.notifications_active : Icons.notifications_outlined),
+            tooltip: _reminderTimes.isEmpty
+                ? AppStrings.of(context, 'reminder')
+                : _reminderTimes.length == 1
+                    ? _reminderTimes.first.format()
+                    : AppStrings.remindersCount(context, _reminderTimes.length),
+            onPressed: _onReminderTap,
+          ),
+          IconButton(
+            icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_outline),
+            tooltip: AppStrings.of(context, 'favourite'),
+            onPressed: _toggleFavorite,
+          ),
+        ],
       ),
       body: GradientBackground(
         child: Scrollbar(
@@ -277,99 +338,50 @@ class _DuaDetailPageState extends State<_DuaDetailPage> {
                   label: AppStrings.of(context, 'tafseer'),
                   child: Text(tafsir),
                 ),
-              // Leaves room so the bottom bar doesn't cover the last line.
-              const SizedBox(height: 90),
+              // Leaves room so the bottom bar (audio row + the persistent
+              // Home/Browse/Search/Favorites bar below it) doesn't cover
+              // the last line.
+              const SizedBox(height: 130),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 6,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // One inline mini-player row - play button, elapsed time,
-              // scrubber, total time, all on the same baseline - rather
-              // than a button stacked next to a two-line seek bar, which
-              // left the button's center fighting the slider's for
-              // vertical alignment.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Row(
-                  children: [
-                    _PlayButton(
-                      audioReady: _audioReady,
-                      player: _player,
-                      onToggle: _togglePlay,
-                    ),
-                    if (_audioReady) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _SeekBar(player: _player, formatDuration: _formatDuration),
-                      ),
-                    ],
-                  ],
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, -2),
                 ),
-              ),
-              // A little breathing room between the playback controls and
-              // the action row below, so the two read as separate groups
-              // instead of one dense block.
-              const SizedBox(height: 6),
-              // Each action gets an equal-width slot (rather than
-              // MainAxisAlignment.spaceEvenly on raw children) so the
-              // icons themselves land at evenly spaced points - spaceEvenly
-              // divides free space around each child's full label width,
-              // so "Reminder"/"Favourite" being wider than "Share" pulled
-              // the icons off an even spacing.
-              Row(
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: Center(
-                      child: _BottomBarAction(
-                        icon: Icons.share_outlined,
-                        label: AppStrings.of(context, 'share'),
-                        onTap: () => _shareDua(context, d, lang),
-                      ),
-                    ),
+                  _PlayButton(
+                    audioReady: _audioReady,
+                    player: _player,
+                    onToggle: _togglePlay,
                   ),
-                  Expanded(
-                    child: Center(
-                      child: _BottomBarAction(
-                        icon: _reminderTimes.isNotEmpty ? Icons.notifications_active : Icons.notifications_outlined,
-                        label: _reminderTimes.isEmpty
-                            ? AppStrings.of(context, 'reminder')
-                            : _reminderTimes.length == 1
-                                ? _reminderTimes.first.format()
-                                : AppStrings.remindersCount(context, _reminderTimes.length),
-                        onTap: _onReminderTap,
-                      ),
+                  if (_audioReady) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _SeekBar(player: _player, formatDuration: _formatDuration),
                     ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: _BottomBarAction(
-                        icon: _isFavorite ? Icons.favorite : Icons.favorite_outline,
-                        label: AppStrings.of(context, 'favourite'),
-                        onTap: _toggleFavorite,
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          const AppBottomNav(),
+        ],
       ),
     );
   }
@@ -490,35 +502,6 @@ class _PlayButton extends StatelessWidget {
   }
 }
 
-class _BottomBarAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _BottomBarAction({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 22),
-              const SizedBox(height: 2),
-              Text(label, style: Theme.of(context).textTheme.labelSmall),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Lists every reminder time set for one dua, each independently
 /// removable, plus a button to add another - a dua can have as many
 /// reminder times as wanted, same as any other dua in the book can.
@@ -546,7 +529,22 @@ class _ReminderSheetState extends State<_ReminderSheet> {
   }
 
   Future<void> _addTime() async {
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      // Works around a well-known Flutter issue where the time picker
+      // dialog's OK/Cancel buttons get pushed off-screen (invisible, so
+      // unreachable) when the device's system font size is set above
+      // 100% - the dial still renders and looks tappable, but there's no
+      // way to confirm a selection. Capping the dialog's own text scale
+      // doesn't touch text scaling anywhere else in the app.
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
+          child: child!,
+        );
+      },
+    );
     if (time == null || !mounted) return;
     await ReminderService.instance.addReminder(
       appId: widget.dua.appId,

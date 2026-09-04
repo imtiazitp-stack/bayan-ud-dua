@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 import '../services/dua_repository.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/dua_card.dart';
 import '../widgets/gradient_background.dart';
 import 'dua_detail_screen.dart';
@@ -108,6 +109,7 @@ class DuaListScreen extends StatelessWidget {
       body: GradientBackground(
         child: DuaListView(situation: situation, emotion: emotion, preloaded: preloaded),
       ),
+      bottomNavigationBar: const AppBottomNav(),
     );
   }
 }
