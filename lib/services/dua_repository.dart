@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
+import '../l10n/app_strings.dart';
 import '../models/dua.dart';
 
 /// Loads duas.json once and serves it to the rest of the app.
@@ -91,5 +92,53 @@ class DuaRepository {
     if (durood != null) order.add(durood);
     addRange(16, 140);
     return order;
+  }
+
+  /// The name of the book section [appId] falls under, localized for
+  /// [lang] - shown as a small subheading under a dua's number on its
+  /// detail page. Matches browse_screen.dart's "By Number" tab exactly
+  /// (same range boundaries and grouping rule), so a dua's detail page
+  /// always names the same section its index tile does. Returns '' for
+  /// Durood (a standalone entry between Istighfar and the First Chapter,
+  /// not part of either) and for Istighfar itself - that heading already
+  /// reads "Istighfar N", so a subheading repeating "Istighfar" under it
+  /// adds nothing.
+  Future<String> sectionLabelFor(int appId, String lang) async {
+    if (appId == 141) return '';
+    if (appId >= 1 && appId <= 15) return '';
+    if (appId >= 16 && appId <= 28) return AppStrings.forLang(lang, 'morning_evening_duas');
+    if (appId >= 29 && appId <= 39) return AppStrings.forLang(lang, 'dua_after_salah');
+
+    final all = await loadAll();
+    if (appId >= 40 && appId <= 93) {
+      return _situationGroupLabel(all.where((d) => d.appId >= 40 && d.appId <= 93).toList(), appId, lang);
+    }
+    if (appId >= 94 && appId <= 140) {
+      return _situationGroupLabel(all.where((d) => d.appId >= 94 && d.appId <= 140).toList(), appId, lang);
+    }
+    return '';
+  }
+
+  /// Mirrors browse_screen.dart's _NumberList._groupBySituation grouping
+  /// rule exactly (group by `situation`, falling back to `title`/"Dua N"
+  /// when situation is empty; a singleton group uses "N - title" rather
+  /// than the raw situation) - keep both in sync if that rule ever
+  /// changes.
+  String _situationGroupLabel(List<Dua> rangeDuas, int appId, String lang) {
+    final groups = <String, List<Dua>>{};
+    for (final d in rangeDuas) {
+      final key = d.situation.isNotEmpty ? d.situation : (d.title.isNotEmpty ? d.title : 'Dua ${d.duaNo}');
+      groups.putIfAbsent(key, () => []).add(d);
+    }
+    for (final entry in groups.entries) {
+      if (!entry.value.any((d) => d.appId == appId)) continue;
+      final sample = entry.value.first;
+      final useTitle = entry.value.length == 1 && sample.title.isNotEmpty && entry.key == sample.situation;
+      if (useTitle) return '${sample.duaNo} - ${sample.localizedTitle(lang)}';
+      if (entry.key == sample.situation && sample.situation.isNotEmpty) return sample.localizedSituation(lang);
+      if (entry.key == sample.title && sample.title.isNotEmpty) return sample.localizedTitle(lang);
+      return entry.key;
+    }
+    return '';
   }
 }
