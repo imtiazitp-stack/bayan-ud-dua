@@ -125,7 +125,13 @@ class AppStrings {
   };
 
   static String of(BuildContext context, String key) {
-    final lang = Localizations.localeOf(context).languageCode;
+    return forLang(Localizations.localeOf(context).languageCode, key);
+  }
+
+  /// Same lookup as [of], but for the rare place (e.g. DuaRepository's
+  /// book-section labels) that needs a UI string without a BuildContext
+  /// on hand - just the already-known active language code.
+  static String forLang(String lang, String key) {
     return _values[key]?[lang] ?? _values[key]?['en'] ?? key;
   }
 
