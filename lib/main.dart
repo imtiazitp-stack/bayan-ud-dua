@@ -60,7 +60,7 @@ class _BayanUdhDuaAppState extends State<BayanUdhDuaApp> {
       title: 'Bayan-udh-Dua',
       debugShowCheckedModeBanner: false,
       locale: LocaleService.instance.locale,
-      supportedLocales: const [Locale('en'), Locale('te')],
+      supportedLocales: const [Locale('en'), Locale('te'), Locale('ur')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
