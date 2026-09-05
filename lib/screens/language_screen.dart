@@ -7,7 +7,7 @@ import '../widgets/gradient_background.dart';
 /// Reached from the overflow menu on the Home tab (see
 /// home_dashboard_screen.dart's _Greeting). Only languages with real
 /// content are offered - see LocaleService.supported for why Arabic/
-/// Hindi/Urdu aren't listed yet.
+/// Hindi aren't listed yet.
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
 
@@ -19,6 +19,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
   static const _labels = {
     'en': 'English',
     'te': 'తెలుగు',
+    'ur': 'اردو',
   };
 
   @override
